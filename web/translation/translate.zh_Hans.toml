@@ -426,6 +426,7 @@
 "settings" = "设置"
 "accountInfo" = "帐户信息"
 "outboundStatus" = "出站状态"
+"sendThrough" = "发送通过"
 
 [pages.xray.balancer]
 "addBalancer" = "添加平衡器"
@@ -447,6 +448,8 @@
 [pages.xray.dns]
 "enable" = "启用 DNS"
 "enableDesc" = "启用内置 DNS 服务器"
+"tag" = "DNS 入站标签"
+"tagDesc" = "此标记将在路由规则中用作入站标记。"
 "strategy" = "查询策略"
 "strategyDesc" = "解析域名的总体策略"
 "add" = "添加服务器"

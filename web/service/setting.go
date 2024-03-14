@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
 	"x-ui/database"
 	"x-ui/database/model"
 	"x-ui/logger"
@@ -58,11 +59,12 @@ var defaultValueMap = map[string]string{
 	"subJsonPath":        "/json/",
 	"subJsonURI":         "",
 	"subJsonFragment":    "",
+	"subJsonMux":         "",
+	"subJsonRules":       "",
 	"warp":               "",
 }
 
-type SettingService struct {
-}
+type SettingService struct{}
 
 func (s *SettingService) GetAllSetting() (*entity.AllSetting, error) {
 	db := database.GetDB()
@@ -403,9 +405,18 @@ func (s *SettingService) GetSubJsonFragment() (string, error) {
 	return s.getString("subJsonFragment")
 }
 
+func (s *SettingService) GetSubJsonMux() (string, error) {
+	return s.getString("subJsonMux")
+}
+
+func (s *SettingService) GetSubJsonRules() (string, error) {
+	return s.getString("subJsonRules")
+}
+
 func (s *SettingService) GetWarp() (string, error) {
 	return s.getString("warp")
 }
+
 func (s *SettingService) SetWarp(data string) error {
 	return s.setString("warp", data)
 }

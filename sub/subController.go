@@ -25,16 +25,19 @@ func NewSUBController(
 	showInfo bool,
 	rModel string,
 	update string,
-	jsonFragment string) *SUBController {
-
+	jsonFragment string,
+	jsonMux string,
+	jsonRules string,
+) *SUBController {
+	sub := NewSubService(showInfo, rModel)
 	a := &SUBController{
 		subPath:        subPath,
 		subJsonPath:    jsonPath,
 		subEncrypt:     encrypt,
 		updateInterval: update,
 
-		subService:     NewSubService(showInfo, rModel),
-		subJsonService: NewSubJsonService(jsonFragment),
+		subService:     sub,
+		subJsonService: NewSubJsonService(jsonFragment, jsonMux, jsonRules, sub),
 	}
 	a.initRouter(g)
 	return a
@@ -50,7 +53,6 @@ func (a *SUBController) initRouter(g *gin.RouterGroup) {
 }
 
 func (a *SUBController) subs(c *gin.Context) {
-	println(c.Request.Header["User-Agent"][0])
 	subId := c.Param("subid")
 	host := strings.Split(c.Request.Host, ":")[0]
 	subs, header, err := a.subService.GetSubs(subId, host)
