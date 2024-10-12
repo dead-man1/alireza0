@@ -42,10 +42,10 @@ bash <(curl -Ls https://raw.githubusercontent.com/alireza0/x-ui/master/install.s
 
 ## Install Custom Version
 
-**Step 1:** To install your desired version, add the version to the end of the installation command. e.g., ver `1.8.0`:
+**Step 1:** To install your desired version, use following installation command. e.g., ver `1.8.0`:
 
 ```sh
-bash <(curl -Ls https://raw.githubusercontent.com/alireza0/x-ui/master/install.sh) 1.8.0
+VERSION=1.8.0 bash <(curl -Ls "https://raw.githubusercontent.com/alireza0/x-ui/refs/tags/$VERSION/install.sh") $VERSION
 ```
 
 ## Manual Install & Upgrade
@@ -191,15 +191,17 @@ docker build -t x-ui .
 - Ubuntu 20.04+
 - Debian 11+
 - CentOS 8+
+- OpenEuler 22.03+
 - Fedora 36+
 - Arch Linux
 - Parch Linux
 - Manjaro
 - Armbian
-- AlmaLinux 9+
-- Rocky Linux 9+
+- AlmaLinux 8.0+
+- Rocky Linux 8+
 - Oracle Linux 8+
 - OpenSUSE Tubleweed
+- Amazon Linux 2023
 
 ## Preview
 
