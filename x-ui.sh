@@ -160,7 +160,7 @@ update() {
     fi
 }
 
-custom_version() {
+legacy_version() {
     echo "Enter the panel version (like 1.6.0):"
     read panel_version
 
@@ -371,10 +371,31 @@ disable() {
 }
 
 show_log() {
-    journalctl -u x-ui.service -e --no-pager -f
-    if [[ $# == 0 ]]; then
+    echo -e "${green}\t1.${plain} Debug Log"
+    echo -e "${green}\t2.${plain} Clear All logs"
+    echo -e "${green}\t0.${plain} Back to Main Menu"
+    read -p "Choose an option: " choice
+
+    case "$choice" in
+    0)
+        return
+        ;;
+    1)
+        journalctl -u x-ui -e --no-pager -f -p debug
+        if [[ $# == 0 ]]; then
         before_show_menu
-    fi
+        fi
+        ;;
+    2)
+        sudo journalctl --rotate
+        sudo journalctl --vacuum-time=1s
+        echo "All Logs cleared."
+        restart
+        ;;
+    *)
+        echo "Invalid choice"
+        ;;
+    esac
 }
 
 update_shell() {
@@ -1102,7 +1123,7 @@ show_menu() {
 ————————————————
   ${green}1.${plain} Install
   ${green}2.${plain} Update
-  ${green}3.${plain} Custom Version
+  ${green}3.${plain} Legacy Version
   ${green}4.${plain} Uninstall
 ————————————————
   ${green}5.${plain} Reset Username and Password
@@ -1142,7 +1163,7 @@ show_menu() {
         check_install && update
         ;;
     3)
-        check_install && custom_version
+        check_install && legacy_version
         ;;
     4)
         check_install && uninstall
