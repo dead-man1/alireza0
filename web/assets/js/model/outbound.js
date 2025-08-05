@@ -354,13 +354,15 @@ class TlsStreamSettings extends CommonClass {
         serverName = '',
         alpn = [],
         fingerprint = '',
-        allowInsecure = false
+        allowInsecure = false,
+        echConfigList = '',
     ) {
         super();
         this.serverName = serverName;
         this.alpn = alpn;
         this.fingerprint = fingerprint;
         this.allowInsecure = allowInsecure;
+        this.echConfigList = echConfigList;
     }
 
     static fromJson(json = {}) {
@@ -369,6 +371,7 @@ class TlsStreamSettings extends CommonClass {
             json.alpn,
             json.fingerprint,
             json.allowInsecure,
+            json.echConfigList,
         );
     }
 
@@ -378,6 +381,7 @@ class TlsStreamSettings extends CommonClass {
             alpn: this.alpn,
             fingerprint: this.fingerprint,
             allowInsecure: this.allowInsecure,
+            echConfigList: this.echConfigList,
         };
     }
 }
@@ -388,7 +392,8 @@ class RealityStreamSettings extends CommonClass {
         fingerprint = '',
         serverName = '',
         shortId = '',
-        spiderX = '/'
+        spiderX = '',
+        mldsa65Verify = ''
     ) {
         super();
         this.publicKey = publicKey;
@@ -396,6 +401,7 @@ class RealityStreamSettings extends CommonClass {
         this.serverName = serverName;
         this.shortId = shortId
         this.spiderX = spiderX;
+        this.mldsa65Verify = mldsa65Verify;
     }
     static fromJson(json = {}) {
         return new RealityStreamSettings(
@@ -404,6 +410,7 @@ class RealityStreamSettings extends CommonClass {
             json.serverName,
             json.shortId,
             json.spiderX,
+            json.mldsa65Verify,
         );
     }
     toJson() {
@@ -413,6 +420,7 @@ class RealityStreamSettings extends CommonClass {
             serverName: this.serverName,
             shortId: this.shortId,
             spiderX: this.spiderX,
+            mldsa65Verify: this.mldsa65Verify,
         };
     }
 };
@@ -778,7 +786,8 @@ class Outbound extends CommonClass {
             let alpn = url.searchParams.get('alpn');
             let allowInsecure = url.searchParams.get('allowInsecure');
             let sni = url.searchParams.get('sni') ?? '';
-            stream.tls = new TlsStreamSettings(sni, alpn ? alpn.split(',') : [], fp, allowInsecure == 1);
+            let ech = url.searchParams.get('ech') ?? '';
+            stream.tls = new TlsStreamSettings(sni, alpn ? alpn.split(',') : [], fp, allowInsecure == 1, ech);
         }
 
         if (security == 'reality') {
@@ -787,7 +796,8 @@ class Outbound extends CommonClass {
             let sni = url.searchParams.get('sni') ?? '';
             let sid = url.searchParams.get('sid') ?? '';
             let spx = url.searchParams.get('spx') ?? '';
-            stream.reality = new RealityStreamSettings(pbk, fp, sni, sid, spx);
+            let pqv = url.searchParams.get('pqv') ?? '';
+            stream.reality = new RealityStreamSettings(pbk, fp, sni, sid, spx, pqv);
         }
 
         const regex = /([^@]+):\/\/([^@]+)@(.+):(\d+)(.*)$/;
