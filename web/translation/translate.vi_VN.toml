@@ -69,6 +69,8 @@
 "download" = "Tải xuống"
 "regenerate" = "Tạo mới"
 "refresh" = "Làm mới"
+"autoRefresh" = "Tự động làm mới"
+"refreshInterval" = "Khoảng thời gian làm mới"
 "moreActions" = "Thao tác khác"
 "showPassword" = "Hiện mật khẩu"
 "hidePassword" = "Ẩn mật khẩu"

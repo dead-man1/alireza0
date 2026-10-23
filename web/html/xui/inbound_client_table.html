@@ -37,7 +37,8 @@
     </a-tooltip>
 </template>
 <template slot="enable" slot-scope="text, client, index">
-    <a-switch v-model="client.enable" @change="switchEnableClient(record.id,client)"></a-switch>
+    <a-switch v-model="client.enable" @change="switchEnableClient(record.id,client)"
+        :aria-label="'{{ i18n "enable" }} ' + client.email"></a-switch>
 </template>
 <template slot="online" slot-scope="text, client, index">
     <a-popover v-if="isClientOnline(client.email)"

@@ -117,13 +117,15 @@
                                 <a-col :xs="12" :sm="12" :lg="12" style="text-align: right;">
                                     <a-select v-model="refreshInterval"
                                               v-if="isRefreshEnabled"
+                                              aria-label='{{ i18n "a11y.refreshInterval" }}'
                                               style="width: 70px;"
                                               @change="changeRefreshInterval" :dropdown-class-name="themeSwitcher.currentTheme">
                                         <a-select-option v-for="key in [5,10,30,60]" :value="key*1000">[[ key ]]s</a-select-option>
                                     </a-select>
                                     <a-icon type="sync" :spin="refreshing" @click="manualRefresh" style="margin: 0 5px;"
                                             aria-label='{{ i18n "a11y.refresh" }}'></a-icon>
-                                    <a-switch v-model="isRefreshEnabled" @change="toggleRefresh"></a-switch>
+                                    <a-switch v-model="isRefreshEnabled" @change="toggleRefresh"
+                                              aria-label='{{ i18n "a11y.autoRefresh" }}'></a-switch>
                                 </a-col>
                             </a-row>
                         </div>
@@ -136,7 +138,7 @@
                                     <a-icon slot="unCheckedChildren" type="filter"></a-icon>
                                 </a-switch>
                             </a-tooltip>
-                            <a-input v-if="!enableFilter" v-model.lazy="searchKey" placeholder='{{ i18n "search" }}' autofocus style="max-width: 300px" :size="isMobile ? 'small' : ''"></a-input>
+                            <a-input v-if="!enableFilter" v-model.lazy="searchKey" placeholder='{{ i18n "search" }}' aria-label='{{ i18n "search" }}' autofocus style="max-width: 300px" :size="isMobile ? 'small' : ''"></a-input>
                             <a-radio-group v-if="enableFilter" v-model="filterBy" @change="filterOutbounds" button-style="solid" :size="isMobile ? 'small' : ''">
                                 <a-radio-button value="">{{ i18n "none" }}</a-radio-button>
                                 <a-radio-button value="online">{{ i18n "online" }}</a-radio-button>

@@ -128,7 +128,7 @@
                                   <theme-switch />
                                 </a-col>
                                 <a-col span="20">
-                                    <a-select ref="selectLang" v-model="lang" @change="setLang(lang)" style="width: 150px;" :dropdown-class-name="themeSwitcher.currentTheme">
+                                    <a-select ref="selectLang" v-model="lang" @change="setLang(lang)" style="width: 150px;" aria-label="Language" :dropdown-class-name="themeSwitcher.currentTheme">
                                         <a-select-option :value="l.value" label="English" v-for="l in supportLangs">
                                             <span aria-hidden="true" v-text="l.icon"></span>
                                             &nbsp;&nbsp;<span :lang="l.value" v-text="l.name"></span>

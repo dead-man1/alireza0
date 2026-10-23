@@ -69,6 +69,8 @@
 "download" = "دانلود"
 "regenerate" = "ساخت مقدار جدید"
 "refresh" = "به‌روزرسانی"
+"autoRefresh" = "به‌روزرسانی خودکار"
+"refreshInterval" = "فاصله‌ی به‌روزرسانی"
 "moreActions" = "کارهای بیشتر"
 "showPassword" = "نمایش رمز عبور"
 "hidePassword" = "پنهان کردن رمز عبور"

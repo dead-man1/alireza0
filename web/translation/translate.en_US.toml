@@ -69,6 +69,8 @@
 "download" = "Download"
 "regenerate" = "Generate new"
 "refresh" = "Refresh"
+"autoRefresh" = "Auto refresh"
+"refreshInterval" = "Refresh interval"
 "moreActions" = "More actions"
 "showPassword" = "Show password"
 "hidePassword" = "Hide password"

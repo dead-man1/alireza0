@@ -69,6 +69,8 @@
 "download" = "Скачать"
 "regenerate" = "Сгенерировать новое"
 "refresh" = "Обновить"
+"autoRefresh" = "Автообновление"
+"refreshInterval" = "Интервал обновления"
 "moreActions" = "Другие действия"
 "showPassword" = "Показать пароль"
 "hidePassword" = "Скрыть пароль"

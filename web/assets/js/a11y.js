@@ -6,7 +6,8 @@
 // - clickable icons and buttons with only an icon, "+" or "-" are named,
 // - a tooltip around a nameless button or icon names it,
 // - dropdowns and popconfirms opened from the keyboard can be used with it,
-// - form controls are named after their label and described by its tooltip.
+// - form controls are named after their label and described by its tooltip,
+//   setting rows' controls after their title and by their description.
 // Names come from aria-label when the template gives one, then the tooltip,
 // then a11yIconLabels (icon type -> translated name, set by the page).
 
@@ -319,15 +320,18 @@
         }
     }
 
+    // The parts of a page whose label or title names what is in them.
+    const scopes = '.ant-form-item, .ant-list-item, .ant-divider';
+
     // An icon button named after its icon gets the text it belongs to, like
     // "Add" next to the "Fallbacks" label or "Delete" in "Fallback 1".
-    function nameInContext(el, context) {
+    function nameInContext(el, context, container = el) {
         if (!context) {
             return;
         }
-        el.querySelectorAll('button[' + autoName + '], [role="button"][' + autoName + ']').forEach(button => {
+        container.querySelectorAll('button[' + autoName + '], [role="button"][' + autoName + ']').forEach(button => {
             const base = button.getAttribute(autoName);
-            if (base && button.closest('.ant-form-item, .ant-divider') === el) {
+            if (base && button.closest(scopes) === el) {
                 setAttribute(button, 'aria-label', base + ' ' + context);
             }
         });
@@ -344,19 +348,12 @@
     Divider.mounted = [].concat(Divider.mounted || [], nameDividerButtons);
     Divider.updated = [].concat(Divider.updated || [], nameDividerButtons);
 
-    function linkFormItem() {
-        const el = this.$el;
-        const label = el && el.nodeType === 1 && el.querySelector(':scope > .ant-form-item-label label');
-        const wrapper = label && el.querySelector(':scope > .ant-form-item-control-wrapper');
-        if (!wrapper) {
-            return;
-        }
-        const name = labelText(label);
-        const hint = label.querySelector('[' + hintText + ']');
-        const hintId = hint ? hintElement(this, hint.getAttribute(hintText)) : '';
-        nameInContext(el, name);
-        wrapper.querySelectorAll(formControls).forEach(control => {
-            if (control.closest('.ant-form-item') !== el) {
+    // Names the controls of a form or list item after its label or title,
+    // and describes them by its hint or description.
+    function nameControls(el, container, name, describedBy) {
+        nameInContext(el, name, container);
+        container.querySelectorAll(formControls).forEach(control => {
+            if (control.closest(scopes) !== el) {
                 return;
             }
             if (control.matches('.ant-checkbox-wrapper')) {
@@ -374,13 +371,65 @@
                 control.setAttribute(autoName, '');
             }
             const described = control.getAttribute('aria-describedby');
-            if (!described || described.startsWith('a11y-hint-')) {
-                setAttribute(control, 'aria-describedby', hintId);
+            if (!described || described.startsWith('a11y-')) {
+                setAttribute(control, 'aria-describedby', describedBy);
             }
         });
+    }
+
+    function linkFormItem() {
+        const el = this.$el;
+        const label = el && el.nodeType === 1 && el.querySelector(':scope > .ant-form-item-label label');
+        const wrapper = label && el.querySelector(':scope > .ant-form-item-control-wrapper');
+        if (!wrapper) {
+            return;
+        }
+        const hint = label.querySelector('[' + hintText + ']');
+        nameControls(el, wrapper, labelText(label), hint ? hintElement(this, hint.getAttribute(hintText)) : '');
     }
 
     const FormItem = components.AFormItem.options;
     FormItem.mounted = [].concat(FormItem.mounted || [], linkFormItem);
     FormItem.updated = [].concat(FormItem.updated || [], linkFormItem);
+
+    // Setting rows: a list item's title names the controls next to it, and
+    // its description describes them. Some list items hold several rows.
+    let descriptionCount = 0;
+    function linkListItem() {
+        const el = this.$el;
+        if (!el || el.nodeType !== 1) {
+            return;
+        }
+        el.querySelectorAll('.ant-list-item-meta-title').forEach(title => {
+            if (title.closest('.ant-list-item') !== el) {
+                return;
+            }
+            let row = title.parentElement;
+            while (row !== el && !row.querySelector(formControls)) {
+                row = row.parentElement;
+            }
+            const description = title.closest('.ant-list-item-meta').querySelector('.ant-list-item-meta-description');
+            if (description && !description.id) {
+                description.id = 'a11y-description-' + (++descriptionCount);
+            }
+            nameControls(el, row, labelText(title), description && description.textContent.trim() ? description.id : '');
+        });
+    }
+
+    const ListItem = components.AListItem.options;
+    ListItem.mounted = [].concat(ListItem.mounted || [], linkListItem);
+    ListItem.updated = [].concat(ListItem.updated || [], linkListItem);
+
+    // An aria-label given to a select names its combobox, not its outer box.
+    function nameSelect() {
+        const name = this.$attrs['aria-label'];
+        const combobox = name && this.$el && this.$el.nodeType === 1 && this.$el.querySelector('[role="combobox"]');
+        if (combobox) {
+            setAttribute(combobox, 'aria-label', name);
+        }
+    }
+
+    const Select = components.ASelect.options;
+    Select.mounted = [].concat(Select.mounted || [], nameSelect);
+    Select.updated = [].concat(Select.updated || [], nameSelect);
 })();
