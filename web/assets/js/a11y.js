@@ -3,9 +3,10 @@
 // and every icon antd draws by itself gets the same behavior:
 // - icons are no longer read as "icon: <type>"; decorative ones are hidden,
 // - clickable icons and tags are buttons: focusable and usable with Enter/Space,
-// - clickable icons and buttons with only an icon are named after the icon,
+// - clickable icons and buttons with only an icon, "+" or "-" are named,
 // - a tooltip around a nameless button or icon names it,
-// - dropdowns and popconfirms opened from the keyboard can be used with it.
+// - dropdowns and popconfirms opened from the keyboard can be used with it,
+// - form controls are named after their label and described by its tooltip.
 // Names come from aria-label when the template gives one, then the tooltip,
 // then a11yIconLabels (icon type -> translated name, set by the page).
 
@@ -13,8 +14,11 @@
     const iconLabels = typeof a11yIconLabels === 'undefined' ? {} : a11yIconLabels;
     const components = Vue.options.components;
 
-    // An attribute marking names given here, which a tooltip may replace.
+    // An attribute marking names given here, holding the icon's name, which
+    // a tooltip may replace and the label or divider around may complete.
     const autoName = 'data-a11y-name';
+    // An attribute holding a form label's tooltip text, its hint.
+    const hintText = 'data-a11y-hint';
 
     function onActivateKey(event) {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -42,7 +46,7 @@
             }
             attrs['aria-label'] = name || iconLabels[vm.type];
             if (!name) {
-                attrs[autoName] = '';
+                attrs[autoName] = attrs['aria-label'];
             }
             vnode.data.on = withListener(vnode.data.on, 'keydown', onActivateKey);
         } else if (name) {
@@ -76,7 +80,7 @@
         const name = iconLabels[this.type];
         if (name && parent && parent.matches('button, a') && isNameless(parent)) {
             parent.setAttribute('aria-label', name);
-            parent.setAttribute(autoName, '');
+            parent.setAttribute(autoName, name);
         }
     }
     Icon.mounted = [].concat(Icon.mounted || [], nameIconButton);
@@ -151,7 +155,7 @@
         const type = (el.className.match(/\banticon-(?!spin\b)([\w-]+)/) || [])[1];
         if (!el.getAttribute('aria-label') && iconLabels[type]) {
             el.setAttribute('aria-label', iconLabels[type]);
-            el.setAttribute(autoName, '');
+            el.setAttribute(autoName, iconLabels[type]);
         }
     }
 
@@ -193,14 +197,18 @@
         return icon && icon.componentOptions.propsData.type;
     }
 
+    // Buttons showing only "+" or "-" are named like these icons.
+    const signs = { '+': 'plus', '-': 'minus' };
+
     const Button = components.AButton.options;
     const buttonRender = Button.render;
     Button.render = function (h) {
         const vnode = buttonRender.call(this, h);
-        if (vnode && vnode.data && !this.$attrs['aria-label'] && !hasText(this.$slots.default)) {
-            const name = iconLabels[this.icon || slotIcon(this.$slots.default)];
+        if (vnode && vnode.data && !this.$attrs['aria-label']) {
+            const slot = this.$slots.default;
+            const name = iconLabels[hasText(slot) ? signs[vnodeText(slot).trim()] : this.icon || slotIcon(slot)];
             if (name) {
-                vnode.data.attrs = Object.assign({}, vnode.data.attrs, { 'aria-label': name, [autoName]: '' });
+                vnode.data.attrs = Object.assign({}, vnode.data.attrs, { 'aria-label': name, [autoName]: name });
             }
         }
         return vnode;
@@ -241,6 +249,9 @@
         }
         if (el.matches('button, a, [role="button"]') && isNameless(el)) {
             el.setAttribute('aria-label', text);
+            el.removeAttribute(autoName);
+        } else if (el.closest('.ant-form-item-label')) {
+            el.setAttribute(hintText, text);
         } else if (el.matches('.anticon[aria-hidden]')) {
             el.removeAttribute('aria-hidden');
             el.setAttribute('role', 'img');
@@ -251,4 +262,125 @@
     const Tooltip = components.ATooltip.options;
     Tooltip.mounted = [].concat(Tooltip.mounted || [], nameByTooltip);
     Tooltip.updated = [].concat(Tooltip.updated || [], nameByTooltip);
+
+    // Form controls named after their form item's label. Antd 1.x only ties
+    // the two together for forms using v-decorator, which the panel doesn't.
+    const formControls = [
+        'input:not([type="hidden"]):not([type="radio"]):not([type="checkbox"])',
+        'textarea',
+        '[role="combobox"]',
+        '[role="switch"]',
+        '.ant-checkbox-wrapper',
+        '.ant-radio-group',
+    ].join(', ');
+
+    // The label's text without the buttons in it, like the sync icon next to
+    // "Email" or "Password".
+    function labelText(node) {
+        return [...node.childNodes].map(child => {
+            if (child.nodeType === Node.TEXT_NODE) {
+                return child.textContent;
+            }
+            if (child.nodeType !== Node.ELEMENT_NODE || child.getAttribute('aria-hidden') === 'true' ||
+                child.matches('button, [role="button"]')) {
+                return '';
+            }
+            return labelText(child);
+        }).join(' ').replace(/\s+/g, ' ').trim();
+    }
+
+    // Tooltip texts are only in the page while hovered, so the hint of a
+    // label is kept in a hidden element the controls are described by.
+    let hints;
+    let hintCount = 0;
+    function hintElement(vm, text) {
+        if (!hints) {
+            hints = document.createElement('div');
+            hints.hidden = true;
+            document.body.appendChild(hints);
+        }
+        if (!vm.a11yHint) {
+            vm.a11yHint = document.createElement('span');
+            vm.a11yHint.id = 'a11y-hint-' + (++hintCount);
+            hints.appendChild(vm.a11yHint);
+            vm.$once('hook:beforeDestroy', () => vm.a11yHint.remove());
+        }
+        if (vm.a11yHint.textContent !== text) {
+            vm.a11yHint.textContent = text;
+        }
+        return vm.a11yHint.id;
+    }
+
+    function setAttribute(el, name, value) {
+        if (!value) {
+            el.removeAttribute(name);
+        } else if (el.getAttribute(name) !== value) {
+            el.setAttribute(name, value);
+        }
+    }
+
+    // An icon button named after its icon gets the text it belongs to, like
+    // "Add" next to the "Fallbacks" label or "Delete" in "Fallback 1".
+    function nameInContext(el, context) {
+        if (!context) {
+            return;
+        }
+        el.querySelectorAll('button[' + autoName + '], [role="button"][' + autoName + ']').forEach(button => {
+            const base = button.getAttribute(autoName);
+            if (base && button.closest('.ant-form-item, .ant-divider') === el) {
+                setAttribute(button, 'aria-label', base + ' ' + context);
+            }
+        });
+    }
+
+    function nameDividerButtons() {
+        const el = this.$el;
+        if (el && el.nodeType === 1) {
+            nameInContext(el, labelText(el));
+        }
+    }
+
+    const Divider = components.ADivider.options;
+    Divider.mounted = [].concat(Divider.mounted || [], nameDividerButtons);
+    Divider.updated = [].concat(Divider.updated || [], nameDividerButtons);
+
+    function linkFormItem() {
+        const el = this.$el;
+        const label = el && el.nodeType === 1 && el.querySelector(':scope > .ant-form-item-label label');
+        const wrapper = label && el.querySelector(':scope > .ant-form-item-control-wrapper');
+        if (!wrapper) {
+            return;
+        }
+        const name = labelText(label);
+        const hint = label.querySelector('[' + hintText + ']');
+        const hintId = hint ? hintElement(this, hint.getAttribute(hintText)) : '';
+        nameInContext(el, name);
+        wrapper.querySelectorAll(formControls).forEach(control => {
+            if (control.closest('.ant-form-item') !== el) {
+                return;
+            }
+            if (control.matches('.ant-checkbox-wrapper')) {
+                if (control.textContent.trim()) {
+                    return;
+                }
+                control = control.querySelector('input');
+            } else if (control.matches('.ant-radio-group')) {
+                control.setAttribute('role', 'radiogroup');
+            }
+            const own = control.hasAttribute('aria-labelledby') ||
+                (control.hasAttribute('aria-label') && !control.hasAttribute(autoName));
+            if (!own) {
+                setAttribute(control, 'aria-label', name);
+                control.setAttribute(autoName, '');
+            }
+            const described = control.getAttribute('aria-describedby');
+            if (!described || described.startsWith('a11y-hint-')) {
+                setAttribute(control, 'aria-describedby', hintId);
+            }
+        });
+    }
+
+    const FormItem = components.AFormItem.options;
+    FormItem.mounted = [].concat(FormItem.mounted || [], linkFormItem);
+    FormItem.updated = [].concat(FormItem.updated || [], linkFormItem);
 })();

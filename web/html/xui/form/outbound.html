@@ -1284,8 +1284,10 @@
             style="margin-right: 5px;"
             @search="convertLink"
             @pressEnter="convertLink"
-            placeholder="vmess:// | vless:// | trojan:// | ss:// | hysteria2://">
-            <a-button slot="enterButton" type="primary"><a-icon type="sync"></a-icon></a-button>
+            placeholder="vmess:// | vless:// | trojan:// | ss:// | hysteria2://"
+            aria-label='{{ i18n "pages.xray.outbound.linkConverter" }}'>
+            <a-button slot="enterButton" type="primary"
+                aria-label='{{ i18n "pages.xray.outbound.linkConverter" }}'><a-icon type="sync"></a-icon></a-button>
         </a-input-search>
     </a-form-item>
     <a-divider>{{ i18n "pages.xray.outbound.jsonFreeEditor" }}</a-divider>
