@@ -666,31 +666,7 @@
                 v-if="outbound.stream.xhttp.mode === 'packet-up'">
                 <a-input v-model.trim="outbound.stream.xhttp.extra.scMinPostsIntervalMs"></a-input>
             </a-form-item>
-            <a-form-item label="xmux">
-                <a-switch v-model="outbound.stream.xhttp.extra.enableXmux"></a-switch>
-            </a-form-item>
-            <template v-if="outbound.stream.xhttp.extra.enableXmux">
-                <a-form-item label='{{ i18n "pages.inbounds.stream.xhttp.maxConcurrency" }}'
-                    v-if="!outbound.stream.xhttp.extra.xmux.maxConnections">
-                    <a-input v-model="outbound.stream.xhttp.extra.xmux.maxConcurrency"></a-input>
-                </a-form-item>
-                <a-form-item label='{{ i18n "pages.inbounds.stream.xhttp.maxConnections" }}'
-                    v-if="!outbound.stream.xhttp.extra.xmux.maxConcurrency">
-                    <a-input v-model="outbound.stream.xhttp.extra.xmux.maxConnections"></a-input>
-                </a-form-item>
-                <a-form-item label='{{ i18n "pages.inbounds.stream.xhttp.maxReuseTimes" }}'>
-                    <a-input v-model="outbound.stream.xhttp.extra.xmux.cMaxReuseTimes"></a-input>
-                </a-form-item>
-                <a-form-item label='{{ i18n "pages.inbounds.stream.xhttp.maxRequestTimes" }}'>
-                    <a-input v-model="outbound.stream.xhttp.extra.xmux.hMaxRequestTimes"></a-input>
-                </a-form-item>
-                <a-form-item label='{{ i18n "pages.inbounds.stream.xhttp.maxReusableSecs" }}'>
-                    <a-input v-model="outbound.stream.xhttp.extra.xmux.hMaxReusableSecs"></a-input>
-                </a-form-item>
-                <a-form-item label='{{ i18n "pages.inbounds.stream.xhttp.keepAlivePeriod" }}'>
-                    <a-input-number v-model.number="outbound.stream.xhttp.extra.xmux.hKeepAlivePeriod"></a-input-number>
-                </a-form-item>
-            </template>
+            {{template "form/xmuxFields" "outbound.stream.xhttp.extra"}}
             <a-form-item label='{{ i18n "pages.inbounds.stream.xhttp.downloadSettings" }}'>
                 <a-tooltip placement="bottom">
                     <template slot="title">
@@ -720,6 +696,7 @@
     <!-- xdrive -->
     <template v-if="outbound.stream.network === 'xdrive'">
         {{template "form/xdriveFields" "outbound.stream.xdrive"}}
+        {{template "form/xmuxFields" "outbound.stream.xdrive"}}
     </template>
     <!-- masque -->
     <template v-if="outbound.stream.network === 'masque'">
@@ -778,6 +755,7 @@
             <a-input v-model.trim="outbound.stream.masque.path"
                 :placeholder="outbound.stream.masque.warp ? '/' : '/.well-known/masque/ip/{target}/{ipproto}/'"></a-input>
         </a-form-item>
+        {{template "form/xmuxFields" "outbound.stream.masque"}}
         <a-form-item label='{{ i18n "pages.inbounds.stream.tcp.requestHeader" }}'>
             <a-button icon="plus" size="small" @click="outbound.stream.masque.addHeader('', '')"></a-button>
         </a-form-item>
@@ -1314,4 +1292,32 @@
     <textarea style="position:absolute; left: -800px;" id="outboundJson"></textarea>
 </a-tab-pane>
 </a-tabs>
+{{end}}
+
+{{define "form/xmuxFields"}}
+<a-form-item label="xmux">
+    <a-switch v-model="{{.}}.enableXmux"></a-switch>
+</a-form-item>
+<template v-if="{{.}}.enableXmux">
+    <a-form-item label='{{ i18n "pages.inbounds.stream.xhttp.maxConcurrency" }}'
+        v-if="!{{.}}.xmux.maxConnections">
+        <a-input v-model="{{.}}.xmux.maxConcurrency" placeholder="16-32"></a-input>
+    </a-form-item>
+    <a-form-item label='{{ i18n "pages.inbounds.stream.xhttp.maxConnections" }}'
+        v-if="!{{.}}.xmux.maxConcurrency">
+        <a-input v-model="{{.}}.xmux.maxConnections" placeholder="1"></a-input>
+    </a-form-item>
+    <a-form-item label='{{ i18n "pages.inbounds.stream.xhttp.maxReuseTimes" }}'>
+        <a-input v-model="{{.}}.xmux.cMaxReuseTimes"></a-input>
+    </a-form-item>
+    <a-form-item label='{{ i18n "pages.inbounds.stream.xhttp.maxRequestTimes" }}'>
+        <a-input v-model="{{.}}.xmux.hMaxRequestTimes" placeholder="600-900"></a-input>
+    </a-form-item>
+    <a-form-item label='{{ i18n "pages.inbounds.stream.xhttp.maxReusableSecs" }}'>
+        <a-input v-model="{{.}}.xmux.hMaxReusableSecs" placeholder="1800-3000"></a-input>
+    </a-form-item>
+    <a-form-item label='{{ i18n "pages.inbounds.stream.xhttp.keepAlivePeriod" }}'>
+        <a-input-number v-model.number="{{.}}.xmux.hKeepAlivePeriod"></a-input-number>
+    </a-form-item>
+</template>
 {{end}}

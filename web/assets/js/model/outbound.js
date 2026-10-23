@@ -339,6 +339,22 @@ class HttpUpgradeStreamSettings extends CommonClass {
     }
 }
 
+// XMUX spreads a client's streams over HTTP connections, for XHTTP, MASQUE
+// and XDRIVE. Fields left empty fall back to the core defaults.
+class Xmux {
+    static toJson(xmux) {
+        if (!xmux) return undefined;
+        return {
+            maxConcurrency: CommonClass.shrinkObject(xmux.maxConcurrency),
+            maxConnections: CommonClass.shrinkObject(xmux.maxConnections),
+            cMaxReuseTimes: CommonClass.shrinkObject(xmux.cMaxReuseTimes),
+            hMaxRequestTimes: CommonClass.shrinkObject(xmux.hMaxRequestTimes),
+            hMaxReusableSecs: CommonClass.shrinkObject(xmux.hMaxReusableSecs),
+            hKeepAlivePeriod: CommonClass.shrinkObject(xmux.hKeepAlivePeriod),
+        };
+    }
+}
+
 class XhttpExtraSettings extends CommonClass {
     constructor({
         headers = [],
@@ -491,7 +507,6 @@ class XhttpExtraSettings extends CommonClass {
                 if (h && h.name) headersMap[h.name] = h.value;
             }
         }
-        const xmux = this.xmux || {};
         return {
             headers: CommonClass.shrinkObject(headersMap),
             xPaddingBytes: CommonClass.shrinkObject(this.xPaddingBytes),
@@ -511,14 +526,7 @@ class XhttpExtraSettings extends CommonClass {
             scMaxEachPostBytes: CommonClass.shrinkObject(this.scMaxEachPostBytes),
             noGRPCHeader: this.noGRPCHeader ? true : undefined,
             scMinPostsIntervalMs: CommonClass.shrinkObject(this.scMinPostsIntervalMs),
-            xmux: !this.xmux ? undefined : {
-                maxConcurrency: CommonClass.shrinkObject(xmux.maxConcurrency),
-                maxConnections: CommonClass.shrinkObject(xmux.maxConnections),
-                cMaxReuseTimes: CommonClass.shrinkObject(xmux.cMaxReuseTimes),
-                hMaxRequestTimes: CommonClass.shrinkObject(xmux.hMaxRequestTimes),
-                hMaxReusableSecs: CommonClass.shrinkObject(xmux.hMaxReusableSecs),
-                hKeepAlivePeriod: CommonClass.shrinkObject(xmux.hKeepAlivePeriod),
-            },
+            xmux: Xmux.toJson(this.xmux),
             downloadSettings: CommonClass.shrinkObject(download),
         };
     }
@@ -1512,6 +1520,7 @@ class XDriveStreamSettings extends CommonClass {
         eagerWindowMs = 0,
         holeTimeoutMs = 0,
         template = '',
+        xmux = undefined,
     } = {}) {
         super();
         this.service = service;
@@ -1526,6 +1535,17 @@ class XDriveStreamSettings extends CommonClass {
         this.eagerWindowMs = eagerWindowMs;
         this.holeTimeoutMs = holeTimeoutMs;
         this.template = template;
+        this.xmux = xmux;
+    }
+
+    // XMUX left off means the core default: one connection, or four to Google
+    // Drive over h2
+    get enableXmux() {
+        return this.xmux !== undefined;
+    }
+
+    set enableXmux(value) {
+        this.xmux = value ? (this.xmux || {}) : undefined;
     }
 
     static fromJson(json = {}) {
@@ -1561,6 +1581,7 @@ class XDriveStreamSettings extends CommonClass {
             'sessionTtlSeconds', 'concurrency', 'eagerWindowMs', 'holeTimeoutMs']) {
             if (this[key]) result[key] = this[key];
         }
+        result.xmux = Xmux.toJson(this.xmux);
         return result;
     }
 }
@@ -1569,7 +1590,7 @@ class XDriveStreamSettings extends CommonClass {
 // With "warp" it connects to Cloudflare WARP, signing in with the device's P-256
 // key instead of user/pass; host and path then default to WARP's.
 class MasqueStreamSettings extends CommonClass {
-    constructor(host = '', path = '', user = '', pass = '', headers = [], warp = undefined) {
+    constructor(host = '', path = '', user = '', pass = '', headers = [], warp = undefined, xmux = undefined) {
         super();
         this.host = host;
         this.path = path;
@@ -1577,6 +1598,16 @@ class MasqueStreamSettings extends CommonClass {
         this.pass = pass;
         this.headers = headers;
         this.warp = warp;
+        this.xmux = xmux;
+    }
+
+    // XMUX left off means the core default: one connection
+    get enableXmux() {
+        return this.xmux !== undefined;
+    }
+
+    set enableXmux(value) {
+        this.xmux = value ? (this.xmux || {}) : undefined;
     }
 
     get warpSwitch() {
@@ -1608,6 +1639,7 @@ class MasqueStreamSettings extends CommonClass {
             json.pass,
             Object.entries(json.headers || {}).map(([name, value]) => ({ name, value })),
             warp,
+            json.xmux && typeof json.xmux === 'object' ? { ...json.xmux } : undefined,
         );
     }
 
@@ -1628,6 +1660,7 @@ class MasqueStreamSettings extends CommonClass {
                 publicKey: this.warp.publicKey,
                 address: this.warp.address,
             } : undefined,
+            xmux: Xmux.toJson(this.xmux),
         };
     }
 }
