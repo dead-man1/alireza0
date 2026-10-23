@@ -15,6 +15,7 @@ import (
 
 var (
 	i18nBundle   *i18n.Bundle
+	langMatcher  language.Matcher
 	LocalizerWeb *i18n.Localizer
 	LocalizerBot *i18n.Localizer
 )
@@ -39,6 +40,7 @@ func InitLocalizer(i18nFS embed.FS, settingService SettingService) error {
 	if err := parseTranslationFiles(i18nFS, i18nBundle); err != nil {
 		return err
 	}
+	langMatcher = language.NewMatcher(i18nBundle.LanguageTags())
 
 	// setup bot locale
 	if err := initTGBotLocalizer(settingService); err != nil {
@@ -112,10 +114,18 @@ func LocalizerMiddleware() gin.HandlerFunc {
 
 		LocalizerWeb = i18n.NewLocalizer(i18nBundle, lang)
 
+		c.Set("lang", pageLang(lang))
 		c.Set("localizer", LocalizerWeb)
 		c.Set("I18n", I18n)
 		c.Next()
 	}
+}
+
+// pageLang returns the translation a requested language gets, as the tag for
+// the page's lang attribute, so screen readers read it in that language.
+func pageLang(lang string) string {
+	_, index := language.MatchStrings(langMatcher, lang)
+	return i18nBundle.LanguageTags()[index].String()
 }
 
 func parseTranslationFiles(i18nFS embed.FS, i18nBundle *i18n.Bundle) error {
