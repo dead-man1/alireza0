@@ -7,7 +7,8 @@
 // - a tooltip around a nameless button or icon names it,
 // - dropdowns and popconfirms opened from the keyboard can be used with it,
 // - form controls are named after their label and described by its tooltip,
-//   setting rows' controls after their title and by their description.
+//   setting rows' controls after their title and by their description,
+// - selects are comboboxes where focus is, announcing the active option.
 // Names come from aria-label when the template gives one, then the tooltip,
 // then a11yIconLabels (icon type -> translated name, set by the page).
 
@@ -420,16 +421,48 @@
     ListItem.mounted = [].concat(ListItem.mounted || [], linkListItem);
     ListItem.updated = [].concat(ListItem.updated || [], linkListItem);
 
-    // An aria-label given to a select names its combobox, not its outer box.
-    function nameSelect() {
-        const name = this.$attrs['aria-label'];
-        const combobox = name && this.$el && this.$el.nodeType === 1 && this.$el.querySelector('[role="combobox"]');
-        if (combobox) {
-            setAttribute(combobox, 'aria-label', name);
+    // Antd's select takes focus on its outer box, or on the search input of
+    // a multiple select, but gives the combobox role to an inner box that is
+    // never focused, so screen readers announced neither the select nor the
+    // options the arrow keys move through. The focused element becomes the
+    // combobox, pointing at the active option.
+    let optionCount = 0;
+    function updateSelect(vm) {
+        const el = vm.$el;
+        const inner = el && el.nodeType === 1 && el.querySelector('.ant-select-selection');
+        const target = inner && (el.tabIndex >= 0 ? el : el.querySelector('.ant-select-search__field'));
+        if (!target) {
+            return;
+        }
+        const listId = inner.getAttribute('aria-controls');
+        const open = el.classList.contains('ant-select-open');
+        const listbox = open && listId && document.getElementById(listId);
+        const active = listbox && listbox.querySelector('.ant-select-dropdown-menu-item-active');
+        if (active && !active.id) {
+            active.id = 'a11y-option-' + (++optionCount);
+        }
+        inner.setAttribute('role', 'none');
+        target.setAttribute('role', 'combobox');
+        setAttribute(target, 'aria-haspopup', 'listbox');
+        setAttribute(target, 'aria-controls', listId);
+        setAttribute(target, 'aria-expanded', open ? 'true' : 'false');
+        setAttribute(target, 'aria-activedescendant', active ? active.id : '');
+        if (vm.$attrs['aria-label']) {
+            setAttribute(target, 'aria-label', vm.$attrs['aria-label']);
+        }
+        if (!target.a11ySelect) {
+            target.a11ySelect = true;
+            target.addEventListener('keydown', () => setTimeout(() => updateSelect(vm)));
         }
     }
 
+    function selectAsCombobox() {
+        updateSelect(this);
+        // the dropdown is drawn after the select opens
+        setTimeout(() => updateSelect(this), 50);
+    }
+
     const Select = components.ASelect.options;
-    Select.mounted = [].concat(Select.mounted || [], nameSelect);
-    Select.updated = [].concat(Select.updated || [], nameSelect);
+    Select.mounted = [].concat(Select.mounted || [], selectAsCombobox);
+    Select.updated = [].concat(Select.updated || [], selectAsCombobox);
 })();
