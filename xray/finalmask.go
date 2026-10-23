@@ -203,3 +203,33 @@ func upgradeXDNSSettings(settings map[string]any) bool {
 	}
 	return true
 }
+
+// DropFilterMasks removes the "filter" masks from a stream settings map. They
+// only act on an inbound, so share links and subscriptions leave them out
+// rather than hand the server's IP lists to clients.
+func DropFilterMasks(stream map[string]any) {
+	finalmask, _ := stream["finalmask"].(map[string]any)
+	if finalmask == nil {
+		return
+	}
+	for _, key := range []string{"tcp", "udp"} {
+		masks, ok := finalmask[key].([]any)
+		if !ok {
+			continue
+		}
+		kept := make([]any, 0, len(masks))
+		for _, mask := range masks {
+			if m, _ := mask.(map[string]any); m["type"] != "filter" {
+				kept = append(kept, mask)
+			}
+		}
+		if len(kept) > 0 {
+			finalmask[key] = kept
+		} else {
+			delete(finalmask, key)
+		}
+	}
+	if len(finalmask) == 0 {
+		delete(stream, "finalmask")
+	}
+}

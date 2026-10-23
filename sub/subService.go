@@ -1302,7 +1302,7 @@ func (s *SubService) genRemark(inbound *model.Inbound, email string, extra strin
 // addFinalMaskParam shares the inbound's finalmask as "fm", which Xray's share
 // link standard defines as the whole object in JSON. Port hopping, kept in the
 // inbound as quicParams.udpHop for share links, reaches the client as the
-// udphop mask the core now expects.
+// udphop mask the core now expects. Source IP filters stay on the server.
 func addFinalMaskParam(params map[string]string, stream map[string]interface{}) {
 	finalmask, ok := stream["finalmask"].(map[string]interface{})
 	if !ok || len(finalmask) == 0 {
@@ -1317,6 +1317,7 @@ func addFinalMaskParam(params map[string]string, stream map[string]interface{}) 
 		return
 	}
 	xray.MoveUDPHopToMask(clientStream)
+	xray.DropFilterMasks(clientStream)
 	fm, _ := clientStream["finalmask"].(map[string]interface{})
 	if len(fm) == 0 {
 		return

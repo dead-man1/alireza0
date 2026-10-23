@@ -1390,8 +1390,15 @@ class UdpMask extends XrayCommonClass {
                     client: (settings.client || []).map(i => UdpMask.customItemForForm(i)),
                     server: (settings.server || []).map(i => UdpMask.customItemForForm(i)),
                 };
+            case 'filter':
+                return UdpMask.filterSettings(settings);
             case 'noise':
-                return { reset: settings.reset ?? 0, noise: (settings.noise || []).map(n => UdpMask.noiseItemForForm(n)) };
+                return {
+                    reset: settings.reset ?? 0,
+                    // a Lua file that plans the noise instead of the items
+                    script: settings.script || '',
+                    noise: (settings.noise || []).map(n => UdpMask.noiseItemForForm(n)),
+                };
             case 'realm':
                 return {
                     url: settings.url || '',
@@ -1430,6 +1437,22 @@ class UdpMask extends XrayCommonClass {
             const { name, ...rest } = d;
             return { names: d.names || (name ? [name] : []), ...rest, types: d.types || [] };
         }).filter(Boolean);
+    }
+
+    // A filter mask lets only these source IPs reach the inbound; with both
+    // lists a source must be allowed and not blocked. Clients pass it through.
+    static filterSettings(settings = {}) {
+        return {
+            allowedSourceIPs: settings.allowedSourceIPs || [],
+            blockedSourceIPs: settings.blockedSourceIPs || [],
+        };
+    }
+
+    static filterToJson(settings = {}) {
+        const out = {};
+        if (settings.allowedSourceIPs?.length) out.allowedSourceIPs = settings.allowedSourceIPs;
+        if (settings.blockedSourceIPs?.length) out.blockedSourceIPs = settings.blockedSourceIPs;
+        return out;
     }
 
     // Empty record types leave the choice to the core, which answers all four
@@ -1611,7 +1634,13 @@ class UdpMask extends XrayCommonClass {
             };
         }
         if (this.type === 'noise') {
-            settings = { reset: settings.reset || undefined, noise: (settings.noise || []).map(n => UdpMask.noiseItemToJson(n)) };
+            // the core takes either a script or noise items
+            settings = settings.script
+                ? { reset: settings.reset || undefined, script: settings.script }
+                : { reset: settings.reset || undefined, noise: (settings.noise || []).map(n => UdpMask.noiseItemToJson(n)) };
+        }
+        if (this.type === 'filter') {
+            settings = UdpMask.filterToJson(settings);
         }
         if (this.type === 'xdns') {
             settings = { domains: UdpMask.xdnsDomainsToJson(settings.domains) };
@@ -1637,6 +1666,8 @@ class TcpMask extends XrayCommonClass {
 
     _getDefaultSettings(type, settings = {}) {
         switch (type) {
+            case 'filter':
+                return UdpMask.filterSettings(settings);
             case 'header-custom':
                 const rounds = list => (list || []).map(round => (round || []).map(i => UdpMask.customItemForForm(i)));
                 return {
@@ -1700,6 +1731,9 @@ class TcpMask extends XrayCommonClass {
                 servers: rounds(settings.servers),
                 errors: rounds(settings.errors),
             };
+        }
+        if (this.type === 'filter') {
+            settings = UdpMask.filterToJson(settings);
         }
         if (this.type === 'xmc') {
             settings = {
@@ -2244,6 +2278,12 @@ class Inbound extends XrayCommonClass {
     getFinalMaskForShare() {
         const fm = this.stream.finalmask?.toJson();
         if (!fm) return undefined;
+        // source IP filters only act on the server
+        for (const key of ['tcp', 'udp']) {
+            if (!fm[key]) continue;
+            fm[key] = fm[key].filter(mask => mask.type !== 'filter');
+            if (fm[key].length === 0) delete fm[key];
+        }
         const udpHop = fm.quicParams?.udpHop;
         if (udpHop) {
             delete fm.quicParams.udpHop;

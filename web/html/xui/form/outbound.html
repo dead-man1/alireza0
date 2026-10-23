@@ -1072,20 +1072,7 @@
             </a-form-item>
         </template>
         <template v-if="mask.type === 'noise'">
-            <a-form-item label='{{ i18n "reset" }}'>
-                <a-input v-model.trim="mask.settings.reset" placeholder="60-120" />
-            </a-form-item>
-            <a-form-item label='{{ i18n "pages.inbounds.stream.finalmask.noise" }}'>
-                <a-icon type="plus" type="primary" size="small" @click="mask.settings.noise.push(UdpMask.noiseItemForForm({rand: '1-8192'}))" />
-            </a-form-item>
-            <template v-for="(n, index) in mask.settings.noise" :key="index">
-                <a-divider :style="{ margin: '0' }"> {{ i18n "pages.inbounds.stream.finalmask.noise" }} [[ index + 1 ]]
-                    <a-icon type="delete"
-                        @click="() => mask.settings.noise.splice(index, 1)"
-                        :style="{ color: 'rgb(255, 77, 79)', cursor: 'pointer' }"></a-icon>
-                </a-divider>
-                {{template "form/noiseItem" "n"}}
-            </template>
+            {{template "form/noiseMask" "mask"}}
         </template>
         <template v-if="mask.type === 'xicmp'">
             {{template "form/xicmpFields" "mask"}}

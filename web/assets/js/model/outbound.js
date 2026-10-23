@@ -886,7 +886,12 @@ class UdpMask extends CommonClass {
                     server: (settings.server || []).map(i => UdpMask.customItemForForm(i)),
                 };
             case 'noise':
-                return { reset: settings.reset ?? 0, noise: (settings.noise || []).map(n => UdpMask.noiseItemForForm(n)) };
+                return {
+                    reset: settings.reset ?? 0,
+                    // a Lua file that plans the noise instead of the items
+                    script: settings.script || '',
+                    noise: (settings.noise || []).map(n => UdpMask.noiseItemForForm(n)),
+                };
             case 'realm':
                 return {
                     url: settings.url || '',
@@ -1166,7 +1171,10 @@ class UdpMask extends CommonClass {
             };
         }
         if (this.type === 'noise') {
-            settings = { ...settings, noise: (settings.noise || []).map(n => UdpMask.noiseItemToJson(n)) };
+            // the core takes either a script or noise items
+            settings = settings.script
+                ? { reset: settings.reset, script: settings.script }
+                : { reset: settings.reset, noise: (settings.noise || []).map(n => UdpMask.noiseItemToJson(n)) };
             if (!settings.reset) delete settings.reset;
         }
         if (this.type === 'xdns') {

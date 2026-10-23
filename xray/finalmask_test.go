@@ -127,3 +127,21 @@ func TestUpgradeXDNSMasksKeepsNewSchema(t *testing.T) {
 		t.Fatalf("changed to %v", stream)
 	}
 }
+
+func TestDropFilterMasks(t *testing.T) {
+	stream := streamFrom(t, `{"finalmask":{
+		"tcp":[{"type":"filter","settings":{"allowedSourceIPs":["10.0.0.0/8"]}}],
+		"udp":[{"type":"filter"},{"type":"salamander","settings":{"password":"x"}}],
+		"quicParams":{"congestion":"bbr"}}}`)
+	DropFilterMasks(stream)
+	want := streamFrom(t, `{"finalmask":{"udp":[{"type":"salamander","settings":{"password":"x"}}],"quicParams":{"congestion":"bbr"}}}`)
+	if !reflect.DeepEqual(stream, want) {
+		t.Fatalf("got %v, want %v", stream, want)
+	}
+
+	only := streamFrom(t, `{"network":"tcp","finalmask":{"tcp":[{"type":"filter"}]}}`)
+	DropFilterMasks(only)
+	if !reflect.DeepEqual(only, streamFrom(t, `{"network":"tcp"}`)) {
+		t.Fatalf("an empty finalmask was left behind: %v", only)
+	}
+}
