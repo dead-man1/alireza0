@@ -63,6 +63,18 @@
 "export" = "Экспорт"
 "importInvalid" = "Неверные данные импорта"
 
+[a11y]
+"add" = "Добавить"
+"remove" = "Убрать"
+"download" = "Скачать"
+"regenerate" = "Сгенерировать новое"
+"refresh" = "Обновить"
+"moreActions" = "Другие действия"
+"showPassword" = "Показать пароль"
+"hidePassword" = "Скрыть пароль"
+"openMenu" = "Открыть меню"
+"closeMenu" = "Закрыть меню"
+
 [menu]
 "dashboard" = "Обзор"
 "inbounds" = "Подключения"

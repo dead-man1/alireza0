@@ -63,6 +63,18 @@
 "export" = "خروجی گرفتن"
 "importInvalid" = "دادهٔ ورودی نامعتبر است"
 
+[a11y]
+"add" = "افزودن"
+"remove" = "برداشتن"
+"download" = "دانلود"
+"regenerate" = "ساخت مقدار جدید"
+"refresh" = "به‌روزرسانی"
+"moreActions" = "کارهای بیشتر"
+"showPassword" = "نمایش رمز عبور"
+"hidePassword" = "پنهان کردن رمز عبور"
+"openMenu" = "باز کردن منو"
+"closeMenu" = "بستن منو"
+
 [menu]
 "dashboard" = "نمای کلی"
 "inbounds" = "ورودی‌ها"

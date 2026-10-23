@@ -63,6 +63,18 @@
 "export" = "导出"
 "importInvalid" = "导入数据无效"
 
+[a11y]
+"add" = "添加"
+"remove" = "移除"
+"download" = "下载"
+"regenerate" = "重新生成"
+"refresh" = "刷新"
+"moreActions" = "更多操作"
+"showPassword" = "显示密码"
+"hidePassword" = "隐藏密码"
+"openMenu" = "打开菜单"
+"closeMenu" = "关闭菜单"
+
 [menu]
 "dashboard" = "概述"
 "inbounds" = "入站列表"

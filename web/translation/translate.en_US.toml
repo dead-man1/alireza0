@@ -63,6 +63,18 @@
 "export" = "Export"
 "importInvalid" = "Invalid import data"
 
+[a11y]
+"add" = "Add"
+"remove" = "Remove"
+"download" = "Download"
+"regenerate" = "Generate new"
+"refresh" = "Refresh"
+"moreActions" = "More actions"
+"showPassword" = "Show password"
+"hidePassword" = "Hide password"
+"openMenu" = "Open menu"
+"closeMenu" = "Close menu"
+
 [menu]
 "dashboard" = "Overview"
 "inbounds" = "Inbounds"

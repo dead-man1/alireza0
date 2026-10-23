@@ -58,7 +58,10 @@
           @close="siderDrawer.close()"
           :visible="siderDrawer.visible"
           :wrap-style="{ padding: 0 }">
-    <div class="drawer-handle" @click="siderDrawer.change()" slot="handle">
+    <div class="drawer-handle" @click="siderDrawer.change()" slot="handle"
+         role="button" tabindex="0" :aria-expanded="siderDrawer.visible ? 'true' : 'false'"
+         :aria-label="siderDrawer.visible ? '{{ i18n "a11y.closeMenu" }}' : '{{ i18n "a11y.openMenu" }}'"
+         @keydown.enter.space.prevent="siderDrawer.change()">
         <a-icon :type="siderDrawer.visible ? 'close' : 'menu-fold'"></a-icon>
     </div>
     {{template "menuItems" .}}

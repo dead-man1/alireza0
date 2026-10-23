@@ -63,6 +63,18 @@
 "export" = "Xuất"
 "importInvalid" = "Dữ liệu nhập không hợp lệ"
 
+[a11y]
+"add" = "Thêm"
+"remove" = "Gỡ bỏ"
+"download" = "Tải xuống"
+"regenerate" = "Tạo mới"
+"refresh" = "Làm mới"
+"moreActions" = "Thao tác khác"
+"showPassword" = "Hiện mật khẩu"
+"hidePassword" = "Ẩn mật khẩu"
+"openMenu" = "Mở menu"
+"closeMenu" = "Đóng menu"
+
 [menu]
 "dashboard" = "Tổng quan"
 "inbounds" = "Đầu Vào khách hàng"
