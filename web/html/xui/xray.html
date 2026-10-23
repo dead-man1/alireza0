@@ -143,7 +143,7 @@
                                             </a-col>
                                             <a-col :lg="24" :xl="12">
                                                 <a-select
-                                                    v-model="routingStrategy"
+                                                    v-model="routingStrategy" :disabled="!!routingScript"
                                                     style="width: 100%" :dropdown-class-name="themeSwitcher.currentTheme">
                                                     <a-select-option v-for="s in routingDomainStrategies" :value="s">[[ s ]]</a-select-option>
                                                 </a-select>
@@ -151,6 +151,8 @@
                                         </a-row>
                                     </a-list-item>
                                     <setting-list-item type="text" title='{{ i18n "pages.xray.routingScript" }}' desc='{{ i18n "pages.xray.scriptDesc" }}' placeholder="route.lua" v-model="routingScript"></setting-list-item>
+                                    <a-alert v-if="routingScript" type="warning" show-icon style="margin: 0 20px 20px;"
+                                        message='{{ i18n "pages.xray.scriptRulesNote" }}'></a-alert>
                                 </a-collapse-panel>
                                 <a-collapse-panel header='{{ i18n "pages.xray.logConfigs" }}'>
                                     <a-row :xs="24" :sm="24" :lg="12">
@@ -329,6 +331,8 @@
                                     </a-row>
                                 </a-list-item>
                                 <setting-list-item type="text" title='{{ i18n "pages.xray.dns.script" }}' desc='{{ i18n "pages.xray.scriptDesc" }}' placeholder="dns.lua" v-model="dnsScript"></setting-list-item>
+                                <a-alert v-if="dnsScriptConflict" type="error" show-icon style="margin: 0 20px 20px;"
+                                    message='{{ i18n "pages.xray.dns.scriptConflict" }}'></a-alert>
                                 <a-divider>DNS</a-divider>
                                 <a-button type="primary" icon="plus" @click="addDNSServer()" style="margin-bottom: 10px;">{{ i18n "pages.xray.dns.add" }}</a-button>
                                 <a-table :columns="dnsColumns" bordered v-if="dnsServers.length>0"
@@ -890,7 +894,8 @@
                         this.dnsServers = dnsServers;
                         dnsModal.close();
                     },
-                    isEdit: false
+                    isEdit: false,
+                    scriptActive: !!this.dnsScript,
                 });
             },
             editDNSServer(index){
@@ -903,7 +908,8 @@
                         this.dnsServers = dnsServers;
                         dnsModal.close();
                     },
-                    isEdit: true
+                    isEdit: true,
+                    scriptActive: !!this.dnsScript,
                 });
             },
             deleteDNSServer(index){
@@ -1267,6 +1273,15 @@
                     newTemplateSettings.dns.queryStrategy =  newValue;
                     this.templateSettings = newTemplateSettings;
                 }
+            },
+            // Xray-core refuses a DNS script next to fallback switches or servers
+            // that pick domains themselves
+            dnsScriptConflict: function () {
+                if (!this.dnsScript) return false;
+                const dns = this.templateSettings.dns;
+                if (dns.disableFallback || dns.disableFallbackIfMatch || dns.enableParallelQuery) return true;
+                return (dns.servers || []).some(s => typeof s === 'object' && s !== null &&
+                    ((s.domains && s.domains.length > 0) || s.skipFallback || s.finalQuery));
             },
             dnsServers: {
                 get: function () { return this.enableDNS ? this.templateSettings.dns.servers : []; },

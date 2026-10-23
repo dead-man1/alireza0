@@ -17,7 +17,8 @@
     <a-form-item label='{{ i18n "address" }}'>
       <a-input v-model.trim="dnsModal.dnsServer.address"></a-input>
     </a-form-item>
-    <a-form-item label='{{ i18n "pages.xray.dns.domains" }}'>
+    <!-- a DNS script picks the server itself; the core refuses domains and skipFallback next to it -->
+    <a-form-item label='{{ i18n "pages.xray.dns.domains" }}' v-if="!dnsModal.scriptActive">
       <a-button icon="plus" size="small" type="primary" @click="dnsModal.dnsServer.domains.push('')"></a-button>
       <template v-for="(domain, index) in dnsModal.dnsServer.domains">
         <a-input v-model.trim="dnsModal.dnsServer.domains[index]">
@@ -53,6 +54,7 @@
     okText: '{{ i18n "confirm" }}',
     isEdit: false,
     confirm: null,
+    scriptActive: false,
     dnsServer: {
       id: '',
       address: "localhost",
@@ -62,11 +64,15 @@
       skipFallback: true,
     },
     ok() {
-      domains = dnsModal.dnsServer.domains.filter(d => d.length > 0);
+      domains = dnsModal.scriptActive ? [] : dnsModal.dnsServer.domains.filter(d => d.length > 0);
       expectIPs = dnsModal.dnsServer.expectIPs.filter(ip => ip.length > 0);
       dnsModal.dnsServer.domains = domains;
       dnsModal.dnsServer.expectIPs = expectIPs;
       if (!dnsModal.dnsServer.id) delete dnsModal.dnsServer.id;
+      if (dnsModal.scriptActive) {
+        delete dnsModal.dnsServer.skipFallback;
+        delete dnsModal.dnsServer.finalQuery;
+      }
       // a bare address string cannot carry the id a DNS script looks servers up by
       newDnsServer = (domains.length > 0 || expectIPs.length > 0 || dnsModal.dnsServer.id) ? dnsModal.dnsServer : dnsModal.dnsServer.address;
       ObjectUtil.execute(dnsModal.confirm, newDnsServer);
@@ -77,8 +83,10 @@
       okText = '{{ i18n "confirm" }}',
       dnsServer,
       confirm = (dnsServer) => { },
-      isEdit = false
+      isEdit = false,
+      scriptActive = false,
     }) {
+      this.scriptActive = scriptActive;
       this.title = title;
       this.okText = okText;
       this.confirm = confirm;

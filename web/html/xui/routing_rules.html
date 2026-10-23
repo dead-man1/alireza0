@@ -77,6 +77,8 @@
                                 message='{{ i18n "pages.xray.rules.infoDesc" }}' show-icon></a-alert>
                         </a-col>
                     </a-row>
+                    <a-alert v-if="routingMeta.script" type="warning" show-icon style="margin-top: 10px;"
+                        message='{{ i18n "pages.xray.scriptRulesNote" }}'></a-alert>
                     <a-divider></a-divider>
                     <a-collapse>
                         <a-collapse-panel header='{{ i18n "pages.xray.basicRouting"}}'>

@@ -242,11 +242,19 @@ func (s *XrayService) mergeRoutingRules(routerConfig json_util.RawMessage) (json
 	if len(routerConfig) > 0 {
 		json.Unmarshal(routerConfig, &routing)
 	}
-	ruleList, err := s.routingRuleService.BuildDbRulesArray()
-	if err != nil {
-		return nil, err
+	// A routing script picks the outbound itself, and Xray-core refuses it
+	// next to rules or a domain strategy, so the stored rules stay out of the
+	// config while one is set.
+	if script, _ := routing["script"].(string); script != "" {
+		delete(routing, "rules")
+		delete(routing, "domainStrategy")
+	} else {
+		ruleList, err := s.routingRuleService.BuildDbRulesArray()
+		if err != nil {
+			return nil, err
+		}
+		routing["rules"] = ruleList
 	}
-	routing["rules"] = ruleList
 	b, err := json.Marshal(routing)
 	if err != nil {
 		return nil, err

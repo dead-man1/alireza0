@@ -51,6 +51,9 @@ func (s *RoutingRuleService) GetRoutingMeta() (map[string]interface{}, error) {
 	if balancers, ok := routing["balancers"]; ok {
 		meta["balancers"] = balancers
 	}
+	if script, ok := routing["script"].(string); ok && script != "" {
+		meta["script"] = script
+	}
 	return meta, nil
 }
 
@@ -97,7 +100,10 @@ func (s *RoutingRuleService) SaveAllRules(rules []*model.RoutingRule) (bool, err
 	}
 
 	needRestart := false
-	if p != nil && p.IsRunning() {
+	// while a routing script is set the rules are not part of the running
+	// config, so they are only stored
+	meta, _ := s.GetRoutingMeta()
+	if _, scripted := meta["script"]; !scripted && p != nil && p.IsRunning() {
 		if err := s.xrayApi.Init(p.GetAPIAddr()); err != nil {
 			return true, err
 		}
