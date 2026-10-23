@@ -505,6 +505,7 @@
 [pages.inbounds.stream.xdrive]
 "service" = "سرویس ذخیره‌سازی"
 "serviceDesc" = "دو طرف از طریق این فضای ذخیره‌سازی داده رد و بدل می‌کنند و باید سرویس و پوشه یکسان داشته باشند. اطلاعات ورود روی کلاینت قرار می‌گیرد، پس فقط برای استفاده شخصی مناسب است. روی اوت‌باند mux را فعال کنید"
+"requirements" = "XDRIVE فقط با رمزنگاری VLESS کار می‌کند (decryption در اینباند و encryption در اوت‌باند)، بدون flow، و با mux فعال در اوت‌باند."
 "remoteFolder" = "پوشه راه دور"
 "remoteFolderDesc" = "Google Drive: شناسه پوشه. Local: مسیر یک پوشه. Template: با {folder} در دسترس است"
 "secrets" = "کلیدها"

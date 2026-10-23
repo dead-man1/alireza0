@@ -505,6 +505,7 @@
 [pages.inbounds.stream.xdrive]
 "service" = "Storage Service"
 "serviceDesc" = "Both ends exchange data through this storage and must use the same service and folder. The credentials sit on the client, so use it for self-hosted setups only, and enable mux on the outbound"
+"requirements" = "XDRIVE only works with VLESS encryption (decryption on the inbound, encryption on the outbound), without flow, and with mux enabled on the outbound."
 "remoteFolder" = "Remote Folder"
 "remoteFolderDesc" = "Google Drive: the folder ID. Local: a directory path. Template: available as {folder}"
 "secrets" = "Secrets"

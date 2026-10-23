@@ -42,3 +42,26 @@ func TestJsonSubMasqueOutboundBuilds(t *testing.T) {
 		t.Fatalf("core rejects the outbound: %v\n%s", err, raw)
 	}
 }
+
+// An XDRIVE client needs VLESS encryption and mux on every connection; the
+// JSON subscription turns mux on even when none is configured.
+func TestJsonSubXDriveOutboundBuilds(t *testing.T) {
+	service := NewSubJsonService("", "", testService())
+	inbound := inboundFor(model.VLESS,
+		`{"clients":[{"id":"27848739-7e62-4138-9fd3-098a63964b6b","email":"alice"}],
+		  "decryption":"mlkem768x25519plus.native.600s.EDz4VYDJA5t2ZN-1Fg5ldwBZKNYqFqM67VVOV7fNu3M",
+		  "encryption":"mlkem768x25519plus.native.0rtt.zvlPsO6IctGhuOTjYMH7leY3nEGGEcAUFLGyBELn9m8"}`,
+		`{"network":"xdrive","security":"none","xdriveSettings":{"service":"local","remoteFolder":"/tmp/xdrive"}}`)
+	inbound.Listen = "example.com"
+	client := model.Client{ID: "27848739-7e62-4138-9fd3-098a63964b6b", Email: "alice"}
+
+	raw := service.genOutbound(inbound, service.streamData(inbound.StreamSettings), client)
+
+	var detour conf.OutboundDetourConfig
+	if err := json.Unmarshal(raw, &detour); err != nil {
+		t.Fatalf("core cannot read the outbound: %v", err)
+	}
+	if _, err := detour.Build(); err != nil {
+		t.Fatalf("core rejects the outbound: %v\n%s", err, raw)
+	}
+}

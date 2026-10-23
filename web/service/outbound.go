@@ -58,6 +58,9 @@ func (s *OutboundService) AddOutbound(outbound *model.Outbound) (*model.Outbound
 	if exist {
 		return outbound, false, common.NewError("Tag already exists:", outbound.Tag)
 	}
+	if err = xray.CheckXDriveOutbound(outbound.Protocol, outbound.Settings, outbound.StreamSettings, outbound.Mux); err != nil {
+		return outbound, false, err
+	}
 
 	db := database.GetDB()
 	var maxSort int
@@ -120,6 +123,9 @@ func (s *OutboundService) UpdateOutbound(outbound *model.Outbound) (*model.Outbo
 	}
 	if exist {
 		return outbound, false, common.NewError("Tag already exists:", outbound.Tag)
+	}
+	if err = xray.CheckXDriveOutbound(outbound.Protocol, outbound.Settings, outbound.StreamSettings, outbound.Mux); err != nil {
+		return outbound, false, err
 	}
 
 	oldOutbound, err := s.GetOutbound(outbound.Id)

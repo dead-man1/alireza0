@@ -773,7 +773,7 @@ class HysteriaStreamSettings extends XrayCommonClass {
 // reach. The numbers left at 0 fall back to the core defaults.
 class XDriveStreamSettings extends XrayCommonClass {
     constructor({
-        service = 'Google Drive',
+        service = 'google-drive',
         remoteFolder = '',
         secrets = [],
         segmentBytes = 0,
@@ -805,6 +805,8 @@ class XDriveStreamSettings extends XrayCommonClass {
         const template = json.template;
         return new XDriveStreamSettings({
             ...json,
+            // Xray-core v26.10.21 renamed the service
+            service: json.service === 'Google Drive' ? 'google-drive' : json.service,
             secrets: json.secrets || [],
             template: template && typeof template === 'object' ? JSON.stringify(template, null, 2) : (template || ''),
         });

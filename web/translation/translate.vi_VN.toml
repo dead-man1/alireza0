@@ -505,6 +505,7 @@
 [pages.inbounds.stream.xdrive]
 "service" = "Dịch vụ lưu trữ"
 "serviceDesc" = "Hai đầu trao đổi dữ liệu qua kho lưu trữ này và phải dùng cùng dịch vụ và thư mục. Thông tin xác thực nằm ở client nên chỉ dùng cho mục đích tự host. Hãy bật mux ở outbound"
+"requirements" = "XDRIVE chỉ hoạt động với mã hóa VLESS (decryption ở inbound, encryption ở outbound), không có flow và phải bật mux ở outbound."
 "remoteFolder" = "Thư mục từ xa"
 "remoteFolderDesc" = "Google Drive: ID thư mục. Local: đường dẫn thư mục. Template: dùng qua {folder}"
 "secrets" = "Khóa bí mật"

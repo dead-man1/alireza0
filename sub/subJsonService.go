@@ -309,6 +309,11 @@ func (s *SubJsonService) genOutbound(inbound *model.Inbound, streamSettings map[
 	if s.mux != "" && inbound.Protocol != model.Masque {
 		outbound.Mux = json_util.RawMessage(s.mux)
 	}
+	// XDRIVE clients need mux for every connection; the configured one is kept
+	// when the core takes it.
+	if network, _ := streamSettings["network"].(string); network == "xdrive" && !xray.XDriveMuxValid(s.mux) {
+		outbound.Mux = json_util.RawMessage(`{"enabled":true}`)
+	}
 
 	var inboundSettings map[string]interface{}
 	json.Unmarshal([]byte(inbound.Settings), &inboundSettings)

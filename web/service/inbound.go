@@ -174,6 +174,9 @@ func (s *InboundService) AddInbound(inbound *model.Inbound) (*model.Inbound, boo
 	if err = xray.CheckShadowsocks2022Keys(string(inbound.Protocol), inbound.Settings); err != nil {
 		return inbound, false, err
 	}
+	if err = xray.CheckXDriveInbound(string(inbound.Protocol), inbound.Settings, inbound.StreamSettings); err != nil {
+		return inbound, false, err
+	}
 
 	clients, err := s.GetClients(inbound)
 	if err != nil {
@@ -317,6 +320,9 @@ func (s *InboundService) UpdateInbound(inbound *model.Inbound) (*model.Inbound, 
 		return inbound, false, common.NewError("Port already exists:", inbound.Port)
 	}
 	if err = xray.CheckShadowsocks2022Keys(string(inbound.Protocol), inbound.Settings); err != nil {
+		return inbound, false, err
+	}
+	if err = xray.CheckXDriveInbound(string(inbound.Protocol), inbound.Settings, inbound.StreamSettings); err != nil {
 		return inbound, false, err
 	}
 
@@ -543,6 +549,9 @@ func (s *InboundService) AddInboundClient(data *model.Inbound) (bool, error) {
 	if err = xray.CheckShadowsocks2022Keys(string(oldInbound.Protocol), oldInbound.Settings); err != nil {
 		return false, err
 	}
+	if err = xray.CheckXDriveInbound(string(oldInbound.Protocol), oldInbound.Settings, oldInbound.StreamSettings); err != nil {
+		return false, err
+	}
 
 	db := database.GetDB()
 	tx := db.Begin()
@@ -758,6 +767,9 @@ func (s *InboundService) UpdateInboundClient(data *model.Inbound, clientId strin
 
 	oldInbound.Settings = string(newSettings)
 	if err = xray.CheckShadowsocks2022Keys(string(oldInbound.Protocol), oldInbound.Settings); err != nil {
+		return false, err
+	}
+	if err = xray.CheckXDriveInbound(string(oldInbound.Protocol), oldInbound.Settings, oldInbound.StreamSettings); err != nil {
 		return false, err
 	}
 	db := database.GetDB()

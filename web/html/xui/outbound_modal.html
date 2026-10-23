@@ -124,6 +124,11 @@
                 if (this.outModal.outbound.protocol == Protocols.VLESS && !outModal.outbound.canEnableTlsFlow()) {
                     delete this.outModal.outbound.settings.flow;
                 }
+                // XDRIVE needs mux on the client
+                if (this.outModal.outbound.stream.network === 'xdrive') {
+                    if (!this.outModal.outbound.mux) this.outModal.outbound.mux = new Mux();
+                    this.outModal.outbound.mux.enabled = true;
+                }
             },
             canEnableTls() {
                 return this.outModal.outbound.canEnableTls();

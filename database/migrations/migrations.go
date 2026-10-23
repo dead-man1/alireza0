@@ -14,6 +14,7 @@ const (
 	VersionCore26930 = 8
 	VersionSSKeys    = 9
 	VersionXDNS      = 10
+	VersionXDrive    = 11
 )
 
 type migration struct {
@@ -31,6 +32,7 @@ var registry = []migration{
 	{VersionCore26930, migrateV008OutboundCore},
 	{VersionSSKeys, migrateV009ShadowsocksKeys},
 	{VersionXDNS, migrateV010XDNS},
+	{VersionXDrive, migrateV011XDrive},
 }
 
 func Run(db *gorm.DB) error {

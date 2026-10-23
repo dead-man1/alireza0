@@ -1,4 +1,6 @@
 {{define "form/xdriveFields"}}
+<a-alert type="info" show-icon style="margin-bottom: 10px;"
+    message='{{ i18n "pages.inbounds.stream.xdrive.requirements" }}'></a-alert>
 <a-form-item>
     <template slot="label">
         <a-tooltip>
@@ -9,7 +11,7 @@
         </a-tooltip>
     </template>
     <a-select v-model="{{.}}.service" :dropdown-class-name="themeSwitcher.currentTheme">
-        <a-select-option value="Google Drive">Google Drive</a-select-option>
+        <a-select-option value="google-drive">Google Drive</a-select-option>
         <a-select-option value="template">Template</a-select-option>
         <a-select-option value="local">Local</a-select-option>
     </a-select>
@@ -25,7 +27,7 @@
     </template>
     <a-input v-model.trim="{{.}}.remoteFolder"></a-input>
 </a-form-item>
-<template v-if="{{.}}.service === 'Google Drive'">
+<template v-if="{{.}}.service === 'google-drive'">
     <a-form-item label="Client ID">
         <a-input v-model.trim="{{.}}.secrets[0]"></a-input>
     </a-form-item>

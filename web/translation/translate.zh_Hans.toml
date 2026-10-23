@@ -505,6 +505,7 @@
 [pages.inbounds.stream.xdrive]
 "service" = "存储服务"
 "serviceDesc" = "两端通过该存储交换数据，必须使用相同的服务和文件夹。凭据保存在客户端，仅适合自建使用，并请在出站启用 mux"
+"requirements" = "XDRIVE 仅适用于 VLESS 加密（入站设置 decryption，出站设置 encryption），不能使用 flow，且出站需开启 mux。"
 "remoteFolder" = "远程文件夹"
 "remoteFolderDesc" = "Google Drive：文件夹 ID。Local：目录路径。Template：可用 {folder} 引用"
 "secrets" = "密钥"
