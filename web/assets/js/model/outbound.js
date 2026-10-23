@@ -861,7 +861,8 @@ class UdpMask extends CommonClass {
     _getDefaultSettings(type, settings = {}) {
         switch (type) {
             case 'salamander':
-                return { password: settings.password || '' };
+                // "packetSize" (Gecko) has no field in the form, keep it as saved
+                return { ...settings, password: settings.password || '' };
             case 'mkcp-legacy':
                 // no header: "value" is the AES-128-GCM password, empty for the
                 // original mKCP format; header "dns": "value" is the domain
@@ -878,7 +879,9 @@ class UdpMask extends CommonClass {
                     remotePorts: settings.remotePorts ?? '',
                 };
             case 'header-custom':
+                // "mode" has no field in the form, keep it as saved
                 return {
+                    ...settings,
                     client: (settings.client || []).map(i => UdpMask.customItemForForm(i)),
                     server: (settings.server || []).map(i => UdpMask.customItemForForm(i)),
                 };
@@ -984,10 +987,12 @@ class UdpMask extends CommonClass {
     }
 
     // Saved items keep only what the core reads (see customItemToJson), so the
-    // fields the form edits are filled back in with the form's defaults.
+    // fields the form edits are filled back in with the form's defaults. "kind"
+    // only lives in the form: a fixed "packet" or "rand" random bytes.
     static customItemForForm(item = {}) {
         return {
             ...item,
+            kind: item.kind ?? (Number(item.rand) > 0 ? 'rand' : 'packet'),
             delay: item.delay ?? 0,
             rand: item.rand ?? 0,
             randRange: item.randRange ?? '0-255',
@@ -996,9 +1001,24 @@ class UdpMask extends CommonClass {
         };
     }
 
+    // Switching an item's kind clears what the other kind had, since the core
+    // takes only one of them.
+    static setCustomItemKind(item, kind) {
+        item.kind = kind;
+        if (kind === 'rand') {
+            item.type = 'array';
+            item.packet = [];
+        } else {
+            item.rand = 0;
+            item.randRange = '0-255';
+        }
+    }
+
     static noiseItemForForm(item = {}) {
+        const hasPacket = Array.isArray(item.packet) ? item.packet.length > 0 : (item.packet ?? '') !== '';
         return {
             ...item,
+            kind: item.kind ?? (item.type === 'exp' || hasPacket ? 'packet' : 'rand'),
             rand: item.rand ?? '',
             randRange: item.randRange ?? '0-255',
             type: item.type ?? 'array',
@@ -1008,9 +1028,9 @@ class UdpMask extends CommonClass {
     }
 
     // A Header Custom item is exactly one of: a fixed "packet", "rand" random
-    // bytes, a "reuse"d capture or a "transform". The form keeps an empty packet
-    // and a rand on every item, which the core refuses together, and an "array"
-    // packet typed as "1,2,3" must become a real JSON array.
+    // bytes, a "reuse"d capture or a "transform". Only the fields of the kind
+    // picked in the form are saved, and an "array" packet typed as "1,2,3"
+    // must become a real JSON array.
     static customItemToJson(item = {}) {
         const out = {};
         for (const key of ['capture', 'reuse', 'transform']) {
@@ -1018,44 +1038,59 @@ class UdpMask extends CommonClass {
         }
         const packet = item.packet ?? '';
         const hasPacket = Array.isArray(packet) ? packet.length > 0 : String(packet) !== '';
+        const kind = item.kind ?? (hasPacket ? 'packet' : 'rand');
         if (out.reuse || out.transform) {
             // the item's kind is already set
-        } else if (hasPacket) {
-            if (!item.type || item.type === 'array') {
+        } else if (kind === 'packet') {
+            if (hasPacket && (!item.type || item.type === 'array')) {
                 out.packet = Array.isArray(packet) ? packet
                     : String(packet).split(/[\s,]+/).filter(Boolean).map(Number);
-            } else {
+            } else if (hasPacket) {
                 out.type = item.type;
                 out.packet = packet;
             }
-        } else if (Number(item.rand) > 0) {
-            out.rand = Number(item.rand);
-            if (item.randRange) out.randRange = item.randRange;
+        } else {
+            if (Number(item.rand) > 0) out.rand = Number(item.rand);
+            if (item.randRange && item.randRange !== '0-255') out.randRange = item.randRange;
         }
         if (item.delay) out.delay = item.delay;
         return out;
     }
 
+    // Like a Header Custom item, a noise item switches between a fixed packet
+    // and random bytes, clearing what the other kind had.
+    static setNoiseItemKind(item, kind) {
+        item.kind = kind;
+        if (kind === 'rand') {
+            item.type = 'array';
+            item.packet = '';
+        } else {
+            item.rand = '';
+            item.randRange = '0-255';
+        }
+    }
+
     // Xray-core takes either random bytes ("rand") or a fixed "packet" per noise
     // item, never both, and an "array" packet must be a real JSON array. "exp"
-    // builds the packet from tags such as <b 0d0a><t><rc 20-40>.
+    // builds the packet from tags such as <b 0d0a><t><rc 20-40>. Only the fields
+    // of the kind picked in the form are saved.
     static noiseItemToJson(item = {}) {
         const out = {};
         const packet = item.packet ?? '';
-        if (item.type === 'exp') {
+        const hasPacket = Array.isArray(packet) ? packet.length > 0 : String(packet) !== '';
+        const kind = item.kind ?? (item.type === 'exp' || hasPacket ? 'packet' : 'rand');
+        if (kind === 'rand') {
+            if (item.rand !== '' && item.rand != null) out.rand = item.rand;
+            if (item.randRange && item.randRange !== '0-255') out.randRange = item.randRange;
+        } else if (item.type === 'exp') {
             out.type = 'exp';
             out.packet = String(packet);
-        } else if (Array.isArray(packet) ? packet.length > 0 : String(packet) !== '') {
-            if (!item.type || item.type === 'array') {
-                out.packet = Array.isArray(packet) ? packet
-                    : String(packet).split(/[\s,]+/).filter(Boolean).map(Number);
-            } else {
-                out.type = item.type;
-                out.packet = packet;
-            }
-        } else {
-            if (item.rand !== '' && item.rand != null) out.rand = item.rand;
-            if (item.randRange) out.randRange = item.randRange;
+        } else if (hasPacket && (!item.type || item.type === 'array')) {
+            out.packet = Array.isArray(packet) ? packet
+                : String(packet).split(/[\s,]+/).filter(Boolean).map(Number);
+        } else if (hasPacket) {
+            out.type = item.type;
+            out.packet = packet;
         }
         if (item.delay !== '' && item.delay != null && item.delay !== 0) out.delay = item.delay;
         return out;
@@ -1147,7 +1182,9 @@ class TcpMask extends CommonClass {
                     profiles: settings.profiles || [],
                 };
             case 'fragment':
+                // "lengths" and "delays" have no field in the form, keep them as saved
                 return {
+                    ...settings,
                     packets: settings.packets || 'tlshello',
                     length: settings.length || '100-200',
                     delay: settings.delay || '10-20',

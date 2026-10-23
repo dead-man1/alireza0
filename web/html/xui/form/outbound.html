@@ -832,7 +832,7 @@
                             <a-divider :style="{ margin: '0' }">
                                 [[ gKey ]] - {{ i18n "pages.inbounds.stream.finalmask.round" }} [[ rIdx + 1 ]]
                                 <a-icon type="plus"
-                                    @click="round.push({delay: 0, rand: 0, randRange: '0-255', type: 'array', packet: []})"
+                                    @click="round.push(UdpMask.customItemForForm())"
                                     :style="{ color: '#1890ff', cursor: 'pointer', marginRight: '8px' }"></a-icon>
                                 <a-icon type="delete"
                                     @click="() => mask.settings[gKey].splice(rIdx, 1)"
@@ -848,23 +848,7 @@
                                 <a-form-item label='{{ i18n "pages.inbounds.stream.finalmask.delay" }}'>
                                     <a-input-number v-model.number="item.delay" :min="0" />
                                 </a-form-item>
-                                <a-form-item label='{{ i18n "pages.inbounds.stream.finalmask.rand" }}'>
-                                    <a-input-number v-model.number="item.rand" :min="0" />
-                                </a-form-item>
-                                <a-form-item label='{{ i18n "pages.inbounds.stream.finalmask.randRange" }}'>
-                                    <a-input v-model.trim="item.randRange" placeholder="0-255" />
-                                </a-form-item>
-                                <a-form-item label='{{ i18n "pages.inbounds.stream.hysteria.type" }}'>
-                                    <a-select v-model="item.type" :dropdown-class-name="themeSwitcher.currentTheme">
-                                        <a-select-option value="array">Array</a-select-option>
-                                        <a-select-option value="str">String</a-select-option>
-                                        <a-select-option value="hex">Hex</a-select-option>
-                                        <a-select-option value="base64">Base64</a-select-option>
-                                    </a-select>
-                                </a-form-item>
-                                <a-form-item label='{{ i18n "pages.inbounds.stream.finalmask.packet" }}'>
-                                    <a-input v-model.trim="item.packet" placeholder='{{ i18n "pages.inbounds.stream.finalmask.binaryData" }}' />
-                                </a-form-item>
+                                {{template "form/customItem" "item"}}
                             </template>
                         </template>
                     </template>
@@ -996,7 +980,7 @@
         </template>
         <template v-if="mask.type === 'header-custom'">
             <a-form-item label='{{ i18n "pages.inbounds.stream.finalmask.client" }}'>
-                <a-icon type="plus" type="primary" size="small" @click="mask.settings.client.push({rand: 0, randRange: '0-255', type: 'array', packet: []})" />
+                <a-icon type="plus" type="primary" size="small" @click="mask.settings.client.push(UdpMask.customItemForForm())" />
             </a-form-item>
             <template v-for="(c, index) in mask.settings.client" :key="index">
                 <a-divider :style="{ margin: '0' }"> {{ i18n "pages.inbounds.stream.finalmask.client" }} [[ index + 1 ]]
@@ -1004,27 +988,11 @@
                         @click="() => mask.settings.client.splice(index, 1)"
                         :style="{ color: 'rgb(255, 77, 79)', cursor: 'pointer' }"></a-icon>
                 </a-divider>
-                <a-form-item label='{{ i18n "pages.inbounds.stream.finalmask.rand" }}'>
-                    <a-input-number v-model.number="c.rand" :min="0"></a-input-number>
-                </a-form-item>
-                <a-form-item label='{{ i18n "pages.inbounds.stream.finalmask.randRange" }}'>
-                    <a-input v-model.trim="c.randRange" placeholder="0-255"></a-input>
-                </a-form-item>
-                <a-form-item label='{{ i18n "pages.inbounds.stream.hysteria.type" }}'>
-                    <a-select v-model="c.type" :dropdown-class-name="themeSwitcher.currentTheme">
-                        <a-select-option value="array">Array</a-select-option>
-                        <a-select-option value="str">String</a-select-option>
-                        <a-select-option value="hex">Hex</a-select-option>
-                        <a-select-option value="base64">Base64</a-select-option>
-                    </a-select>
-                </a-form-item>
-                <a-form-item label='{{ i18n "pages.inbounds.stream.finalmask.packet" }}'>
-                    <a-input v-model.trim="c.packet" placeholder='{{ i18n "pages.inbounds.stream.finalmask.binaryData" }}' />
-                </a-form-item>
+                {{template "form/customItem" "c"}}
             </template>
             <a-divider :style="{ margin: '0' }"></a-divider>
             <a-form-item label='{{ i18n "pages.inbounds.stream.finalmask.server" }}'>
-                <a-icon type="plus" type="primary" size="small" @click="mask.settings.server.push({rand: 0, randRange: '0-255', type: 'array', packet: []})" />
+                <a-icon type="plus" type="primary" size="small" @click="mask.settings.server.push(UdpMask.customItemForForm())" />
             </a-form-item>
             <template v-for="(s, index) in mask.settings.server" :key="index">
                 <a-divider :style="{ margin: '0' }"> {{ i18n "pages.inbounds.stream.finalmask.server" }} [[ index + 1 ]]
@@ -1032,23 +1000,7 @@
                         @click="() => mask.settings.server.splice(index, 1)"
                         :style="{ color: 'rgb(255, 77, 79)', cursor: 'pointer' }"></a-icon>
                 </a-divider>
-                <a-form-item label='{{ i18n "pages.inbounds.stream.finalmask.rand" }}'>
-                    <a-input-number v-model.number="s.rand" :min="0"></a-input-number>
-                </a-form-item>
-                <a-form-item label='{{ i18n "pages.inbounds.stream.finalmask.randRange" }}'>
-                    <a-input v-model.trim="s.randRange" placeholder="0-255"></a-input>
-                </a-form-item>
-                <a-form-item label='{{ i18n "pages.inbounds.stream.hysteria.type" }}'>
-                    <a-select v-model="s.type" :dropdown-class-name="themeSwitcher.currentTheme">
-                        <a-select-option value="array">Array</a-select-option>
-                        <a-select-option value="str">String</a-select-option>
-                        <a-select-option value="hex">Hex</a-select-option>
-                        <a-select-option value="base64">Base64</a-select-option>
-                    </a-select>
-                </a-form-item>
-                <a-form-item label='{{ i18n "pages.inbounds.stream.finalmask.packet" }}'>
-                    <a-input v-model.trim="s.packet" placeholder='{{ i18n "pages.inbounds.stream.finalmask.binaryData" }}' />
-                </a-form-item>
+                {{template "form/customItem" "s"}}
             </template>
         </template>
         <template v-if="mask.type === 'sudoku'">
@@ -1073,7 +1025,7 @@
                 <a-input v-model.trim="mask.settings.reset" placeholder="60-120" />
             </a-form-item>
             <a-form-item label='{{ i18n "pages.inbounds.stream.finalmask.noise" }}'>
-                <a-icon type="plus" type="primary" size="small" @click="mask.settings.noise.push({rand: '1-8192', randRange: '0-255', type: 'array', packet: '', delay: ''})" />
+                <a-icon type="plus" type="primary" size="small" @click="mask.settings.noise.push(UdpMask.noiseItemForForm({rand: '1-8192'}))" />
             </a-form-item>
             <template v-for="(n, index) in mask.settings.noise" :key="index">
                 <a-divider :style="{ margin: '0' }"> {{ i18n "pages.inbounds.stream.finalmask.noise" }} [[ index + 1 ]]
