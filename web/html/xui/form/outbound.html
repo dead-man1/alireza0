@@ -941,18 +941,69 @@
         </template>
         <template v-if="mask.type === 'xdns'">
             {{template "form/xdnsDomains" "mask"}}
-            <a-form-item>
-                <template slot="label">
-                    <a-tooltip>
-                        <template slot="title">
-                            <span>{{ i18n "pages.inbounds.stream.finalmask.resolversDesc" }}</span>
-                        </template>
-                        {{ i18n "pages.inbounds.stream.finalmask.resolvers" }} <a-icon type="question-circle"></a-icon>
-                    </a-tooltip>
-                </template>
-                <a-select mode="tags" v-model="mask.settings.resolvers" :token-separators="[',', ' ']"
-                    :dropdown-class-name="themeSwitcher.currentTheme" placeholder="udp://1.1.1.1:53"></a-select>
+            <a-form-item label='{{ i18n "pages.inbounds.stream.finalmask.resolvers" }}'>
+                <a-icon type="plus" type="primary" size="small"
+                    @click="mask.settings.resolvers.push(UdpMask.xdnsResolverForForm())" />
             </a-form-item>
+            <template v-for="(r, rIdx) in mask.settings.resolvers" :key="'xdns-resolver-' + rIdx">
+                <a-divider :style="{ margin: '0' }"> {{ i18n "pages.inbounds.stream.finalmask.resolvers" }} [[ rIdx + 1 ]]
+                    <a-icon type="delete"
+                        @click="() => mask.settings.resolvers.splice(rIdx, 1)"
+                        :style="{ color: 'rgb(255, 77, 79)', cursor: 'pointer' }"></a-icon>
+                </a-divider>
+                <a-form-item>
+                    <template slot="label">
+                        <a-tooltip>
+                            <template slot="title">
+                                <span>{{ i18n "pages.inbounds.stream.finalmask.resolversDesc" }}</span>
+                            </template>
+                            {{ i18n "address" }} <a-icon type="question-circle"></a-icon>
+                        </a-tooltip>
+                    </template>
+                    <a-select mode="tags" v-model="r.addrs" :token-separators="[',', ' ']"
+                        :dropdown-class-name="themeSwitcher.currentTheme" placeholder="udp://1.1.1.1:53"></a-select>
+                </a-form-item>
+                <!-- worker, TLS and QUIC only apply to https:// (DoH) addresses -->
+                <template v-if="r.addrs.some(a => String(a).startsWith('https://'))">
+                    <a-form-item>
+                        <template slot="label">
+                            <a-tooltip>
+                                <template slot="title">
+                                    <span>{{ i18n "pages.inbounds.stream.finalmask.resolverWorkerDesc" }}</span>
+                                </template>
+                                {{ i18n "pages.inbounds.stream.finalmask.resolverWorker" }} <a-icon type="question-circle"></a-icon>
+                            </a-tooltip>
+                        </template>
+                        <a-input-number v-model.number="r.worker" :min="0" placeholder="32"></a-input-number>
+                    </a-form-item>
+                    <a-form-item>
+                        <template slot="label">
+                            <a-tooltip>
+                                <template slot="title">
+                                    <span>{{ i18n "pages.inbounds.stream.finalmask.resolverTlsDesc" }}</span>
+                                </template>
+                                TLS <a-icon type="question-circle"></a-icon>
+                            </a-tooltip>
+                        </template>
+                        <a-textarea v-model="r.tlsConfig" :auto-size="{ minRows: 2, maxRows: 8 }"
+                            style="font-family: monospace; direction: ltr; text-align: left;"
+                            placeholder='{"serverName": "dns.google"}'></a-textarea>
+                    </a-form-item>
+                    <a-form-item>
+                        <template slot="label">
+                            <a-tooltip>
+                                <template slot="title">
+                                    <span>{{ i18n "pages.inbounds.stream.finalmask.resolverQuicDesc" }}</span>
+                                </template>
+                                QUIC <a-icon type="question-circle"></a-icon>
+                            </a-tooltip>
+                        </template>
+                        <a-textarea v-model="r.quicConfig" :auto-size="{ minRows: 2, maxRows: 8 }"
+                            style="font-family: monospace; direction: ltr; text-align: left;"
+                            placeholder='{"congestion": "bbr"}'></a-textarea>
+                    </a-form-item>
+                </template>
+            </template>
             <a-form-item label='{{ i18n "pages.inbounds.stream.finalmask.extraPoll" }}'>
                 <a-input-number v-model.number="mask.settings.extraPoll" :min="0" :max="3"></a-input-number>
             </a-form-item>

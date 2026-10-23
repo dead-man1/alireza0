@@ -898,8 +898,7 @@ class UdpMask extends CommonClass {
                         lifetime: settings.portMapping?.lifetime || 0,
                     },
                     // edited as JSON text, see realmToJson
-                    tlsConfig: settings.tlsConfig && typeof settings.tlsConfig === 'object'
-                        ? JSON.stringify(settings.tlsConfig, null, 2) : (settings.tlsConfig || ''),
+                    tlsConfig: UdpMask.jsonText(settings.tlsConfig),
                 };
             case 'sudoku':
                 return {
@@ -916,13 +915,16 @@ class UdpMask extends CommonClass {
     }
 
     // Xray-core v26.10.10 gives each xDNS domain a list of "names" and takes
-    // resolvers as {"addrs": ["udp://host:port", ...]}. Older configs carry
-    // v26.9.30's {"name"} and {"type", "settings": {"addr"}} objects, or plain
-    // strings where a resolver reads "name[:type]+udp://addr". The form keeps
-    // the resolvers as one flat list of addresses.
+    // resolvers as groups of "addrs" ("udp://host:port", "tcp://host:port");
+    // v26.10.21 adds "https://" (DoH) with "worker", "tlsConfig" and
+    // "quicConfig" per group. Older configs carry v26.9.30's {"name"} and
+    // {"type", "settings": {"addr"}} objects, or plain strings where a resolver
+    // reads "name[:type]+udp://addr"; their addresses become one group. The TLS
+    // and QUIC settings are edited as JSON text.
     static xdnsSettings(settings = {}) {
         const domains = UdpMask.xdnsDomains(settings);
         const resolvers = [];
+        const legacy = [];
         const addType = (name, type) => {
             const known = domains.find(d => d.names.includes(name));
             if (!known) domains.push({ names: [name], types: [type] });
@@ -935,14 +937,53 @@ class UdpMask extends CommonClass {
                 if (plus < 0 || !addr.includes('://')) continue;
                 const [name, type] = r.slice(0, plus).split(':');
                 if (name) addType(name, UdpMask.XdnsTypes[(type || 'txt').toUpperCase()] || 16);
-                resolvers.push(addr);
+                legacy.push(addr);
             } else if (Array.isArray(r?.addrs)) {
-                resolvers.push(...r.addrs);
+                resolvers.push(UdpMask.xdnsResolverForForm(r));
             } else if (r?.settings?.addr) {
-                resolvers.push(`${r.type || 'udp'}://${r.settings.addr}`);
+                legacy.push(`${r.type || 'udp'}://${r.settings.addr}`);
             }
         }
+        if (legacy.length > 0) resolvers.unshift(UdpMask.xdnsResolverForForm({ addrs: legacy }));
         return { domains, resolvers, extraPoll: settings.extraPoll ?? 0 };
+    }
+
+    static xdnsResolverForForm(resolver = {}) {
+        return {
+            addrs: [...(resolver.addrs || [])],
+            worker: resolver.worker || 0,
+            tlsConfig: UdpMask.jsonText(resolver.tlsConfig),
+            quicConfig: UdpMask.jsonText(resolver.quicConfig),
+        };
+    }
+
+    static xdnsResolverToJson(resolver = {}) {
+        const out = { addrs: resolver.addrs };
+        if (resolver.worker) out.worker = resolver.worker;
+        const tlsConfig = UdpMask.parseJsonText(resolver.tlsConfig);
+        if (tlsConfig !== undefined) out.tlsConfig = tlsConfig;
+        const quicConfig = UdpMask.parseJsonText(resolver.quicConfig);
+        if (quicConfig !== undefined) out.quicConfig = quicConfig;
+        return out;
+    }
+
+    // Settings objects edited as JSON text: an object is shown indented, and
+    // text that does not parse is passed on as is, so the core reports what is
+    // wrong with it.
+    static jsonText(value) {
+        if (value && typeof value === 'object') return JSON.stringify(value, null, 2);
+        return value || '';
+    }
+
+    static parseJsonText(text) {
+        const value = typeof text === 'string' ? text.trim() : text;
+        if (!value) return undefined;
+        if (typeof value === 'object') return value;
+        try {
+            return JSON.parse(value);
+        } catch (e) {
+            return value;
+        }
     }
 
     static xdnsDomains(settings = {}) {
@@ -973,16 +1014,8 @@ class UdpMask extends CommonClass {
             if (pm.timeout) out.portMapping.timeout = pm.timeout;
             if (pm.lifetime) out.portMapping.lifetime = pm.lifetime;
         }
-        const tls = typeof settings.tlsConfig === 'string' ? settings.tlsConfig.trim() : settings.tlsConfig;
-        if (tls && typeof tls === 'object') {
-            out.tlsConfig = tls;
-        } else if (tls) {
-            try {
-                out.tlsConfig = JSON.parse(tls);
-            } catch (e) {
-                out.tlsConfig = tls;
-            }
-        }
+        const tls = UdpMask.parseJsonText(settings.tlsConfig);
+        if (tls !== undefined) out.tlsConfig = tls;
         return out;
     }
 
@@ -1140,7 +1173,8 @@ class UdpMask extends CommonClass {
             settings = {
                 ...settings,
                 domains: UdpMask.xdnsDomainsToJson(settings.domains),
-                resolvers: settings.resolvers?.length ? [{ addrs: settings.resolvers }] : [],
+                resolvers: (settings.resolvers || []).filter(r => r.addrs?.length)
+                    .map(r => UdpMask.xdnsResolverToJson(r)),
             };
         }
         if (['xdns', 'xicmp', 'udphop'].includes(this.type)) {
